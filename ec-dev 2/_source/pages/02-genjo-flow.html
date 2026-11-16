@@ -1,0 +1,51 @@
+<!-- title: 既存ECサイトのフローを可視化 -->
+<!-- use: puzzle,mock -->
+<style>
+.flow{position:absolute;left:28px;right:328px;top:22px;display:flex;align-items:center;justify-content:center;gap:0}
+.fs{width:78px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.fs .bx{width:72px;height:72px;border:1.5px solid var(--t);border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9.5px;font-weight:600;background:#fff;text-align:center}
+.fs .bx .ico{width:30px;height:30px}
+.fs .slot.sq{width:72px;height:72px}.fs .slot.sq.filled>.piece{width:72px;height:72px}
+.fs.act .bx,.fs.act .slot{box-shadow:0 0 0 3px #111}
+.fs.okd .bx{border-color:var(--l)}
+.fs .tri.r{border-left-color:#c7c7cc}
+.ar{border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:11px solid #c7c7cc;margin:0 3px 0 3px;align-self:center;margin-top:-4px}
+.stage{position:absolute;left:28px;right:328px;top:150px;bottom:12px;display:flex;align-items:center;justify-content:center;gap:40px}
+.nav{width:0;height:0;border-top:56px solid transparent;border-bottom:56px solid transparent;cursor:pointer;transition:opacity .2s}
+.nav.p{border-right:42px solid #d2d2d7}.nav.n{border-left:42px solid #d2d2d7}
+.nav:hover{opacity:.6}
+</style>
+<div class="flow" id="flow"></div>
+<div class="stage"><div class="nav p" id="prev"></div><div id="mock"></div><div class="nav n" id="next"></div></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div>
+<script>
+const FL=[
+ {k:'websearch',t:'Webで検索',i:'magnify',scr:['search',{query:'ショッピング'}],at:'q'},
+ {k:'opentop',t:'サイトを開く',i:'world',s:1,scr:['search',{query:'ショッピング'}],at:'r-shop',h:'検索結果から…'},
+ {k:'search',t:'商品を検索',i:'searchinv',s:1,scr:['top',{query:'くだもの'}],at:'q',h:'検索窓で何をする？'},
+ {k:'select',t:'商品を選ぶ',i:'tap',scr:['results',{query:'くだもの'}],at:'p-grape'},
+ {k:'qty',t:'個数を選ぶ',i:'add',s:1,scr:['detail',{sel:'grape',qty:2}],at:'qty',h:'＋−で何を決める？'},
+ {k:'add',t:'カートに入れる',i:'cart',s:1,scr:['detail',{sel:'grape',qty:2}],at:'add',h:'黄色いボタンは？'},
+ {k:'opencart',t:'カートを開く',i:'bag',scr:['detail',{sel:'grape',qty:2,cart:[{id:'grape',qty:2}]}],at:'cartbtn'},
+ {k:'total',t:'合計を確認',i:'money',s:1,scr:['cart',{cart:[{id:'grape',qty:2}]}],at:'total',h:'小計を見て…'},
+ {k:'pay',t:'支払う',i:'card',s:1,scr:['info',{filled:true,cart:[{id:'grape',qty:2}]}],at:'pay',h:'お届け先とカードで…'},
+ {k:'done',t:'注文完了',i:'tick',scr:['done',{}],at:'home'}];
+$('#flow').innerHTML=FL.map((f,i)=>`<div class="fs" data-i="${i}">${f.s?`<div class="slot sq" data-accept="${f.k}" data-hint="${f.h}"></div>`:`<div class="bx">${ic(f.i,30)}${f.t}</div>`}</div>${i<FL.length-1?'<div class="ar"></div>':''}`).join('');
+const pieces={};FL.filter(f=>f.s).forEach(f=>pieces[f.k]={label:f.t,icon:f.i});
+Object.assign(pieces,{x1:{label:'電話で注文',icon:'receiver'},x2:{label:'お店に行く',icon:'store'},x3:{label:'チラシを見る',icon:'doc'},x4:{label:'レジに並ぶ',icon:'grocery'}});
+const P=new Puzzle({root:$('#flow'),pool:$('#pool'),pieces,tile:true});
+const M=new Mock($('#mock'),{scale:1.05});let cur=0;
+async function show(i,{line=true}={}){cur=Math.max(0,Math.min(FL.length-1,i));const f=FL[cur];Wire.clear();M.unhl();
+  $$('.fs').forEach((e,k)=>e.classList.toggle('act',k===cur));await M.go(f.scr[0],JSON.parse(JSON.stringify(f.scr[1])),{wait:60});
+  const t=M.el(f.at);if(t&&line){M.hl(t);Wire.line($(`.fs[data-i="${cur}"]`),t,{vert:true})}}
+$$('.fs').forEach((e,i)=>e.addEventListener('click',ev=>{if(!ev.target.closest('.piece'))show(i)}));
+$('#prev').onclick=()=>show(cur-1);$('#next').onclick=()=>show(cur+1);show(0);
+Page.init({id:'02',title:'既存ECサイトのフローを可視化',done:'流れがつながった！',
+ guide:()=>[$('.fs .slot'),'この画面でやることは？'],
+ async onCheck(){const r=P.check();const bad=new Set([...r.wrong,...r.empty]);M.S.cart=[];
+  for(let i=0;i<FL.length;i++){const f=FL[i],s=$(`.fs[data-i="${i}"] .slot`);await show(i);
+   if(s&&bad.has(s)){Eng.point(s,P.get(s)?f.h:'ここが空いているよ');return false}
+   M.unhl();if(i>0&&f.k!=='done'){await M.go(FL[i-1].scr[0],JSON.parse(JSON.stringify(FL[i-1].scr[1])),{wait:50,push:false});await M.tap(FL[i-1].at)}
+   await show(i);await sleep(350);$(`.fs[data-i="${i}"]`).classList.add('okd');if(s)s.classList.add('ok')}
+  Wire.clear();M.unhl();M.hideFinger();P.lock();return true}});
+</script>

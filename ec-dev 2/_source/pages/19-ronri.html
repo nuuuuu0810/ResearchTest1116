@@ -1,0 +1,63 @@
+<!-- title: 論理回路 -->
+<!-- use: puzzle,mock -->
+<style>
+.bd{position:absolute;left:28px;right:28px;top:10px;bottom:10px;display:flex;align-items:center;gap:40px}
+.prc{flex:1;display:flex;flex-direction:column;gap:8px}
+.sg{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;border:1.5px solid var(--t);border-radius:12px;padding:8px 14px;transition:opacity .3s}
+.sg.off{opacity:.3;pointer-events:none}
+.sg>.h{font-size:13px;font-weight:700;display:flex;flex-direction:column;gap:2px}.sg>.h small{font-size:10.5px;color:var(--s);font-weight:600}
+.bits{display:flex;gap:6px;align-items:flex-end}
+.bit{display:flex;flex-direction:column;align-items:center;gap:2px}.bit small{font-size:10px;color:var(--s)}
+.bit .slot,.bit .v{width:40px;height:40px;min-width:0}.bit .slot .piece{height:36px;padding:0;justify-content:center;font-size:16px;font-family:ui-monospace,Menlo,monospace}
+.bit .v{border:1.5px solid var(--t);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:16px;font-weight:700}
+.num{font-size:26px;font-weight:700;margin:0 10px}
+.ipool{display:flex;gap:6px;margin-left:auto}.ipool .piece{width:38px;height:38px;padding:0;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:15px}
+#cir{position:relative;width:660px;height:300px}
+#cir svg{position:absolute;inset:0}
+#cir .slot{position:absolute;width:62px;height:40px;min-width:0;background:#fff}
+#cir .slot .piece{height:36px;padding:0 4px;justify-content:center;flex-direction:column;gap:0;font-size:9px}
+#cir .slot .piece .ico{display:none}
+.gp{width:44px;height:28px}
+.pin{position:absolute;font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700;transform:translate(-50%,-50%);background:#fff;padding:0 3px}
+.cpool{display:flex;flex-direction:column;gap:6px}.cpool .piece{width:76px;flex-direction:column;gap:0;padding:4px;font-size:10px}
+.w{stroke:#c7c7cc;stroke-width:2;fill:none;transition:stroke .3s}.w.on{stroke:#111;stroke-width:3}
+</style>
+<div class="bd"><div id="mock"></div>
+<div class="prc" id="pr">
+ <div class="sg" id="s1"><div class="h">① 数字 → 2進数<small>3 と 2 を0と1に</small></div><div style="display:flex;align-items:center"><span class="num">3</span><div class="bits" id="b3"></div><span class="num">×</span><span class="num">2</span><div class="bits" id="b2"></div><div class="ipool" id="p1"></div></div></div>
+ <div class="sg off" id="s2"><div class="h">② 回路で<br>かけ算<small>11 × 10</small></div><div style="display:flex;gap:12px;align-items:center"><div id="cir"><svg id="wires" width="660" height="300"></svg></div><div class="cpool" id="p2"></div></div></div>
+ <div class="sg off" id="s3"><div class="h">③ 2進数 → 数字<small>位の重みをたす</small></div><div style="display:flex;align-items:center;gap:6px"><div class="bits" id="b6"></div><span class="num" id="ans">= ?</span><div class="ipool" id="p3"></div></div></div>
+</div></div>
+<script>
+const M=new Mock($('#mock'),{scale:.92});M.go('detail',{sel:'orange',qty:1});
+const bitSlots=(v,id)=>$(id).innerHTML=[2,1].map(w=>`<div class="bit"><small>${w}</small><div class="slot" data-accept="${(v&w)?1:0}" data-hint="${v}は2と1の組み合わせ"></div></div>`).join('');
+bitSlots(3,'#b3');bitSlots(2,'#b2');
+const GS={AND:'<svg class="gp" viewBox="0 0 44 28"><path d="M6 3h16a11 11 0 0 1 0 22H6z" fill="#fff" stroke="#111" stroke-width="2"/></svg>',OR:'<svg class="gp" viewBox="0 0 44 28"><path d="M5 3q9 11 0 22q18 0 28-11Q23 3 5 3z" fill="#fff" stroke="#111" stroke-width="2"/></svg>',XOR:'<svg class="gp" viewBox="0 0 44 28"><path d="M10 3q9 11 0 22q18 0 28-11Q28 3 10 3z" fill="#fff" stroke="#111" stroke-width="2"/><path d="M4 3q9 11 0 22" fill="none" stroke="#111" stroke-width="2"/></svg>',NOT:'<svg class="gp" viewBox="0 0 44 28"><path d="M8 3l22 11-22 11z" fill="#fff" stroke="#111" stroke-width="2"/><circle cx="33" cy="14" r="3" fill="#fff" stroke="#111" stroke-width="2"/></svg>'};
+/* 回路（2けた×2けたのかけ算） */
+const IN={a1:[20,40],a0:[20,100],b1:[20,190],b0:[20,250]};
+const G=[{id:'g1',t:'AND',x:150,y:20,i:['a0','b0'],h:'1けたのかけ算'},{id:'g2',t:'AND',x:150,y:90,i:['a1','b0'],h:'1けたのかけ算'},{id:'g3',t:'AND',x:150,y:160,i:['a0','b1'],h:'1けたのかけ算'},{id:'g4',t:'AND',x:150,y:230,i:['a1','b1'],h:'1けたのかけ算'},
+ {id:'g5',t:'XOR',x:330,y:100,i:['g2','g3'],h:'たし算の「和」'},{id:'g6',t:'AND',x:330,y:170,i:['g2','g3'],h:'たし算の「くり上がり」'},{id:'g7',t:'XOR',x:480,y:200,i:['g4','g6'],h:'たし算の「和」'},{id:'g8',t:'AND',x:480,y:260,i:['g4','g6'],h:'たし算の「くり上がり」'}];
+const OUT={p0:['g1',20],p1:['g5',110],p2:['g7',210],p3:['g8',270]};
+const cir=$('#cir');const pos={};Object.entries(IN).forEach(([k,[x,y]])=>{pos[k]=[x+14,y];cir.insertAdjacentHTML('beforeend',`<span class="pin" style="left:${x}px;top:${y}px" id="pin-${k}">${k} <b id="v-${k}">?</b></span>`)});
+G.forEach(g=>{pos[g.id]=[g.x+62,g.y+20];cir.insertAdjacentHTML('beforeend',`<div class="slot" style="left:${g.x}px;top:${g.y}px" data-accept="${g.t}" data-hint="${g.h}"></div>`)});
+let ws='';const W=[];G.forEach(g=>g.i.forEach((s,k)=>{const [x1,y1]=pos[s],x2=g.x,y2=g.y+(k?28:12);W.push({s,el:null});ws+=`<path class="w" data-s="${s}" d="M${x1},${y1} C${(x1+x2)/2},${y1} ${(x1+x2)/2},${y2} ${x2},${y2}"/>`}));
+Object.entries(OUT).forEach(([k,[s,y]])=>{const [x1,y1]=pos[s];ws+=`<path class="w" data-s="${s}" d="M${x1},${y1} C${600},${y1} ${600},${y} ${630},${y}"/>`;cir.insertAdjacentHTML('beforeend',`<span class="pin" style="left:646px;top:${y}px">${k}<b id="v-${k}"> ?</b></span>`)});
+$('#wires').innerHTML=ws;
+$('#b6').innerHTML=[8,4,2,1].map(w=>`<div class="bit"><small>重み ${w}</small><div class="v" data-w="${w}">?</div><div class="slot" data-w="${w}"></div></div>`).join('');
+let stage=0,P;
+function mk(){if(P)P.lock(true);
+ if(stage===0)P=new Puzzle({root:$('#s1'),pool:$('#p1'),shuffle:false,pieces:{0:{label:'0',inf:true},1:{label:'1',inf:true}}});
+ if(stage===1)P=new Puzzle({root:$('#cir'),pool:$('#p2'),shuffle:false,pieces:Object.fromEntries(Object.keys(GS).map(k=>[k,{label:k,icon:GS[k],inf:true}]))});
+ if(stage===2)P=new Puzzle({root:$('#s3'),pool:$('#p3'),shuffle:false,pieces:Object.fromEntries([0,1,2,4,8].map(n=>[n,{label:''+n,inf:true}]))});}
+mk();
+const val={a1:1,a0:1,b1:1,b0:0};
+async function run(){const f={AND:(a,b)=>a&b,XOR:(a,b)=>a^b};for(const g of G){val[g.id]=f[g.t](val[g.i[0]],val[g.i[1]]);
+  $$(`.w[data-s="${g.i[0]}"],.w[data-s="${g.i[1]}"]`).forEach(w=>w.classList.toggle('on',!!val[w.dataset.s]));await sleep(250)}
+ $$('.w').forEach(w=>w.classList.toggle('on',!!val[w.dataset.s]));Object.entries(OUT).forEach(([k,[s]])=>{$('#v-'+k).textContent=' '+val[s];val[k]=val[s]})}
+Page.init({id:'19',title:'論理回路',nextLabel:'システム配置へ戻る',done:'回路で計算できた！',guide:()=>[$('#b3 .slot'),'3を2進数に'],
+ async onCheck(){if(!P.judge())return false;P.lock();
+  if(stage===0){Object.entries(val).forEach(([k,v])=>{const e=$('#v-'+k);if(e)e.textContent=v});await M.tap('qty+');await M.go('detail',{qty:2},{push:false});stage=1;$('#s2').classList.remove('off');mk();Eng.guide($('#cir .slot'),'回路を置こう');return false}
+  if(stage===1){await run();$$('#b6 .v').forEach((e,i)=>e.textContent=[val.p3,val.p2,val.p1,val.p0][i]);
+   $$('#b6 .slot').forEach((s,i)=>{const b=[val.p3,val.p2,val.p1,val.p0][i];s.dataset.accept=b?s.dataset.w:'0';s.dataset.hint=b?'1なら重みをそのまま':'0なら0'});stage=2;$('#s3').classList.remove('off');mk();Eng.guide($('#b6 .slot'),'重みをたそう');return false}
+  $('#ans').textContent='= 6';await M.tap('add');await M.go('cart',{cart:[{id:'orange',qty:2}]});M.hl('total');toast('6（百円）＝ ￥600');await sleep(900);M.unhl();M.hideFinger();return true}});
+</script>

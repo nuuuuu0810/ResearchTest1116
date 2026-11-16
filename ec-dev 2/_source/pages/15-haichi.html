@@ -1,0 +1,26 @@
+<!-- title: システム配置 -->
+<!-- use: mock,hub -->
+<style>
+.dg{left:70px;right:70px;top:24px;height:420px}
+#mk{width:200px;height:400px;display:flex;justify-content:center}
+.dg .dbl{font-size:11px;color:var(--s);font-weight:600;text-align:center;line-height:1.5}
+.tasks{top:500px}
+</style>
+<div class="dg"><div class="node" id="nPh"><div id="mk"></div></div><div class="link"></div>
+ <div class="node" id="nNet"><div class="bx">${''}</div>インターネット</div><div class="link"></div>
+ <div class="node" id="nSv"><div class="bx"></div>サーバー</div><div class="link"></div>
+ <div class="node" id="nDb"><div class="bx"></div>データベース<div class="dbl">商品名・画像・値段</div></div></div>
+<div class="tasks" id="tasks"></div>
+<script>
+$('#nNet .bx').innerHTML=ic('world',52);$('#nSv .bx').innerHTML=ic('server',52);$('#nDb .bx').innerHTML=ic('db',52);
+const M=new Mock($('#mk'),{scale:.7});M.go('detail',{sel:'grape',qty:1});
+const SUBS=[{id:'16',file:'16-moji.html',label:'文字のデジタル化',at:'#nDb .bx',ord:2},{id:'17',file:'17-gazo.html',label:'画像のデジタル化',at:'#nDb .bx',ord:3},
+ {id:'18',file:'18-computer.html',label:'コンピュータの動作',at:'#nPh .phone',ord:0},{id:'19',file:'19-ronri.html',label:'論理回路',at:'#nSv .bx',ord:1}];
+const relay=async t=>{await Wire.send($('#nDb .bx'),$('#nSv .bx'),t);await Wire.send($('#nSv .bx'),$('#nNet .bx'),t);await Wire.send($('#nNet .bx'),$('#nPh .scr'),t)};
+Page.init({id:'15',title:'システム配置',checkLabel:'全体の動きを見る',done:'システム全体がつながった！',onCheck:()=>Hub.check()});
+Hub.init({subs:SUBS,async finale(){await M.go('results',{query:'くだもの'});
+  await relay('30B0 30EC…');M.hl('p-grape');toast('文字コード → 文字');await sleep(700);M.unhl();
+  await relay('#7030A0…');toast('色の数字 → 画像');await M.tap('p-grape');await M.go('detail',{sel:'grape',qty:1});
+  toast('タップ → CPU → 画面');await M.tap('qty+');await M.go('detail',{qty:2},{push:false});
+  await Wire.send($('#nPh .scr'),$('#nSv .bx'),'5 × 2');toast('論理回路で計算');await Wire.send($('#nSv .bx'),$('#nPh .scr'),'1000');await M.tap('add');await M.go('cart',{cart:[{id:'grape',qty:2}]});M.hl('total');await sleep(900);M.unhl();M.hideFinger()}});
+</script>

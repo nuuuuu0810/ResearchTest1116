@@ -1,0 +1,67 @@
+<!-- title: 価格設定 -->
+<!-- use: excel -->
+<style>
+.bd{position:absolute;left:28px;right:28px;top:20px;bottom:86px;display:flex;align-items:center;gap:26px}
+.xl{width:820px;height:100%}
+.big{width:0;height:0;border-top:70px solid transparent;border-bottom:70px solid transparent;border-left:50px solid #d2d2d7;flex:none}
+.res{flex:1;height:100%;display:flex;flex-direction:column;gap:16px}
+.res .ttl{font-size:13px;font-weight:700;color:var(--s)}
+#chart{flex:1;border:1.5px dashed #a1a1a6;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--m);font-size:13px}
+#chart.on{border:1.5px solid var(--t)}
+.chk{border:1.5px solid var(--t);border-radius:12px;padding:14px 18px}
+.xl-grid td.ok{font-weight:700}
+.auto{color:#3a3a3c;font-weight:700}
+</style>
+<div class="bd">
+ <div class="xl"><div class="xl-bar"><i class="d"></i><i class="d"></i><i class="d"></i><span style="margin-left:6px">price.xlsx</span></div>
+  <div class="xl-tabs"><span>ホーム</span><span class="on">挿入</span><span>数式</span></div>
+  <div class="xl-rib" id="rib"><span style="font-size:11px;color:var(--s);margin-right:4px">グラフ</span></div>
+  <div class="xl-fx"><span class="nm" id="fxn">I2</span><i>fx</i><span id="fx"></span></div>
+  <div class="xl-grid" id="grid"></div></div>
+ <div class="big"></div>
+ <div class="res"><div class="ttl">結果</div><div id="chart">グラフ</div>
+  <div class="chk" id="chk"><div data-c="0"><span class="st"></span>費用を正しく計算できた</div><div data-c="1"><span class="st"></span>利益の見込みが一番大きい</div><div data-c="2"><span class="st"></span>赤字の確率が5%未満</div></div></div>
+</div>
+<script>
+const DATA=[['12月',2000,318],['1月',2000,296],['2月',2200,262],['3月',2400,248],['4月',2400,231],['5月',2600,222],['6月',3000,141],['7月',3000,159],['8月',3200,118],['9月',3400,96],['10月',2800,184],['11月',2600,207]];
+const COST=[['仕入れ値（1箱）',1200],['送料（1箱）',300],['広告費（月）',70000],['サーバー代（月）',30000]];
+const CH=[['line','linechart','折れ線'],['bar','barchart','棒'],['sc','scatter','散布図']];let chartType=null;
+$('#rib').insertAdjacentHTML('beforeend',CH.map(c=>`<div class="rb" data-t="${c[0]}">${ic(c[1],22)}${c[2]}</div>`).join(''));
+$$('.rb').forEach(b=>b.onclick=()=>{chartType=b.dataset.t;$$('.rb').forEach(x=>x.classList.toggle('on',x===b))});
+const F={c:{fn:'',r:''},f:{fn:'',r:''},p:''};const RANGES=['F2:F3','F4:F5','F2:F5','C2:C13'];
+const PRICES=[1800,2200,2400,2600,2800,3000,3400,3800];
+let html='<table><tr><th></th><th>A</th><th>B</th><th>C</th><th style="width:12px">D</th><th>E</th><th>F</th><th style="width:12px">G</th><th>H</th><th style="width:250px">I</th></tr>';
+const R=[['1','<td class="hd">月</td><td class="hd">価格</td><td class="hd">販売数</td>','<td class="hd">コスト</td><td class="hd">金額</td>','<td class="hd">計算</td><td class="hd"></td>']];
+for(let r=2;r<=13;r++){const d=DATA[r-2],c=COST[r-2],L=['1箱の費用','毎月の固定費','来月の価格','予想販売数','利益の見込み','赤字の確率'][r-2];
+ html+=`<tr><td class="rn">${r}</td><td>${d[0]}</td><td class="num">${d[1].toLocaleString()}</td><td class="num">${d[2]}</td><td></td>${c?`<td>${c[0]}</td><td class="num">${c[1].toLocaleString()}</td>`:'<td></td><td></td>'}<td></td>${L?`<td class="hd">${L}</td><td class="ed" data-r="${r}"></td>`:'<td></td><td></td>'}</tr>`}
+$('#grid').innerHTML=html.replace('<tr><td class="rn">2','<tr><td class="rn">1</td><td class="hd">月</td><td class="hd">価格</td><td class="hd">販売数</td><td></td><td class="hd">コスト</td><td class="hd">金額</td><td></td><td class="hd">計算</td><td class="hd">値</td></tr><tr><td class="rn">2')+'</table>';
+const SUM=r=>{const [a,b]=r.split(':');if(a[0]==='C')return DATA.reduce((x,d)=>x+d[2],0);const i=+a.slice(1)-2,j=+b.slice(1)-2;return COST.slice(i,j+1).reduce((x,c)=>x+c[1],0)};
+const fval=o=>!o.fn||!o.r?null:o.fn==='sum'?SUM(o.r):o.fn==='avg'?Math.round(SUM(o.r)/(o.r[0]==='C'?12:2)):null;
+const erf=x=>{const t=1/(1+.3275911*Math.abs(x));const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);return x>=0?y:-y};
+const sim=(p,c,f)=>{const n=Math.max(0,600-.15*p),prof=(p-c)*n-f,be=p>c?f/(p-c):1e9,risk=n<=0?1:.5*(1+erf((be-n)/(.25*n)/Math.SQRT2));return{n,prof,risk}};
+function fnCell(r,o,label){const td=$(`td[data-r="${r}"]`);td.innerHTML=`<div class="xcell"><select class="xsel" data-x="fn"><option value="">関数を選ぶ ▼</option><option value="sum" ${o.fn==='sum'?'selected':''}>合計 SUM（範囲）</option><option value="avg" ${o.fn==='avg'?'selected':''}>平均 AVERAGE（範囲）</option></select><select class="xsel" data-x="r"><option value="">範囲 ▼</option>${RANGES.map(x=>`<option ${o.r===x?'selected':''}>${x}</option>`).join('')}</select><span class="xval">${fval(o)?.toLocaleString()??''}</span></div>`;
+ $$('select',td).forEach(s=>s.onchange=e=>{o[s.dataset.x]=e.target.value;fnCell(r,o);upd();focus(r)})}
+function priceCell(){const td=$('td[data-r="4"]');td.innerHTML=`<div class="xcell"><select class="xsel"><option value="">価格を選ぶ ▼</option>${PRICES.map(p=>`<option value="${p}" ${+F.p===p?'selected':''}>${p.toLocaleString()} 円</option>`).join('')}</select></div>`;$('select',td).onchange=e=>{F.p=e.target.value;upd();focus(4)}}
+function upd(){const c=fval(F.c),f=fval(F.f),p=+F.p;const s=p&&c!=null&&f!=null?sim(p,c,f):null;
+ $('td[data-r="5"]').innerHTML=`<span class="auto">${p?Math.round(600-.15*p)+' 箱':''}</span>`;$('td[data-r="6"]').innerHTML=`<span class="auto">${s?yen(Math.round(s.prof)):''}</span>`;$('td[data-r="7"]').innerHTML=`<span class="auto">${s?(s.risk*100).toFixed(1)+' %':''}</span>`}
+const FX={2:()=>F.c.fn?`=${F.c.fn==='sum'?'SUM':'AVERAGE'}(${F.c.r||'◯'})`:'',3:()=>F.f.fn?`=${F.f.fn==='sum'?'SUM':'AVERAGE'}(${F.f.r||'◯'})`:'',4:()=>F.p,5:()=>'=600-0.15*I4',6:()=>'=(I4-I2)*I5-I3',7:()=>'=赤字になる確率（自動）'};
+function focus(r){$$('td.sel').forEach(t=>t.classList.remove('sel'));$(`td[data-r="${r}"]`).classList.add('sel');$('#fxn').textContent='I'+r;$('#fx').textContent=FX[r]()}
+fnCell(2,F.c);fnCell(3,F.f);priceCell();upd();[2,3,4,5,6,7].forEach(r=>$(`td[data-r="${r}"]`).addEventListener('click',()=>focus(r)));focus(2);
+const tried=[];
+function draw(c,f){const W=420,H=240;if(!chartType){$('#chart').className='';$('#chart').textContent='グラフを選ぼう';return}
+ const pts=tried.map(p=>[p,sim(p,c,f).prof]);const all=PRICES.map(p=>[p,sim(p,c,f).prof]);const mx=Math.max(...all.map(a=>a[1])),mn=Math.min(0,...all.map(a=>a[1]));
+ const X=p=>40+(p-1800)/(3800-1800)*(W-60),Yv=v=>H-30-(v-mn)/(mx-mn)*(H-60);let s=`<line x1="40" x2="${W-20}" y1="${Yv(0)}" y2="${Yv(0)}" stroke="#d2d2d7"/>`;
+ PRICES.forEach(p=>s+=`<text x="${X(p)}" y="${H-10}" font-size="9" text-anchor="middle">${p}</text>`);
+ const sorted=[...pts].sort((a,b)=>a[0]-b[0]);
+ if(chartType==='line')s+=`<polyline points="${sorted.map(a=>X(a[0])+','+Yv(a[1])).join(' ')}" fill="none" stroke="#111" stroke-width="2.5"/>`;
+ sorted.forEach(a=>{s+=chartType==='bar'?`<rect x="${X(a[0])-10}" y="${Math.min(Yv(a[1]),Yv(0))}" width="20" height="${Math.abs(Yv(a[1])-Yv(0))}" fill="#111"/>`:`<circle cx="${X(a[0])}" cy="${Yv(a[1])}" r="5" fill="#111"/>`;s+=`<text x="${X(a[0])}" y="${Yv(a[1])-10}" font-size="10" text-anchor="middle" font-weight="700">${Math.round(a[1]/1000)}千</text>`});
+ $('#chart').className='on';$('#chart').innerHTML=`<svg width="${W}" height="${H}"><text x="40" y="16" font-size="11" fill="#6e6e73">試した価格と利益の見込み</text>${s}</svg>`}
+function mark(i,ok){$(`#chk [data-c="${i}"] .st`).outerHTML=`<span class="st" style="border:none">${ic(ok?'check':'xcircle',26,ok?'#1a7f37':'#d70015')}</span>`}
+Page.init({id:'30',title:'価格設定',checkLabel:'結果を出力する',done:'ベストな価格が決まった！',guide:()=>[$('td[data-r="2"]'),'1箱の費用を計算しよう'],
+ async onCheck(){const c=fval(F.c),f=fval(F.f),p=+F.p;const ok1=c===1500&&f===100000;mark(0,ok1);
+  if(!ok1){mark(1,false);mark(2,false);Eng.point($(`td[data-r="${c!==1500?2:3}"]`),c!==1500?'仕入れ値＋送料の合計':'広告費＋サーバー代の合計');return false}
+  if(!p){mark(1,false);mark(2,false);Eng.point($('td[data-r="4"]'),'価格を選んでみよう');return false}
+  if(!tried.includes(p))tried.push(p);draw(c,f);const s=sim(p,c,f),best=p===2800;mark(1,best);mark(2,s.risk<.05);
+  if(!chartType){Eng.point($('#rib'),'グラフで比べよう');return false}
+  if(!best){Eng.point($('td[data-r="4"]'),p<2800?'もう少し高くしてみよう':'もう少し安くしてみよう');return false}return true}});
+</script>

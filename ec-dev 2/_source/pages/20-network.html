@@ -1,0 +1,28 @@
+<!-- title: ネットワーク構成図 -->
+<!-- use: puzzle,mock,hub -->
+<style>
+.dg{left:40px;right:330px;top:24px;height:420px}
+#mk{width:200px;height:400px;display:flex;justify-content:center}
+.dg .slot.sq{width:96px;height:96px;border-radius:18px}.dg .slot.sq.filled>.piece{width:96px;height:96px}
+.tasks{top:500px;left:40px;right:330px}
+.task{width:200px}
+</style>
+<div class="dg"><div class="node" id="nPh"><div id="mk"></div></div><div class="link"></div>
+ <div class="node" id="nWifi"><div class="slot sq" data-accept="wifi" data-hint="家の中の無線は？"></div>&nbsp;</div><div class="link"></div>
+ <div class="node" id="nNet"><div class="slot sq" data-accept="net" data-hint="世界中をつなぐのは？"></div>&nbsp;</div><div class="link"></div>
+ <div class="node" id="nSv"><div class="bx"></div>サーバー</div></div>
+<div class="tasks" id="tasks"></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div>
+<script>
+$('#nSv .bx').innerHTML=ic('server',52);
+const P=new Puzzle({root:$('.dg'),pool:$('#pool'),tile:true,pieces:{wifi:{label:'Wi-Fi',icon:'wifi'},net:{label:'インターネット',icon:'world'},x1:{label:'電話回線',icon:'receiver'},x2:{label:'郵便',icon:'mail'}}});
+const M=new Mock($('#mk'),{scale:.7});M.go('search',{query:'ショッピング'});
+const SUBS=[{id:'21',file:'21-tcpip.html',label:'通信のデータの流れ（TCP/IP）',at:'#nWifi .slot'},{id:'22',file:'22-packet.html',label:'パケット交換方式',at:'#nNet .slot'},{id:'23',file:'23-angou.html',label:'暗号化の方法',at:'#nNet .slot'},{id:'24',file:'24-setsuzoku.html',label:'Webサイトを閲覧する流れ',at:'#nSv .bx'}];
+const W=$('#nWifi .slot'),N=$('#nNet .slot');
+const hop=async t=>{await Wire.send($('#nPh .scr'),W,t,{dur:600});await Wire.send(W,N,t,{dur:600});await Wire.send(N,$('#nSv .bx'),t,{dur:600})};
+const back=async t=>{await Wire.send($('#nSv .bx'),N,t,{dur:600});await Wire.send(N,W,t,{dur:600});await Wire.send(W,$('#nPh .scr'),t,{dur:600})};
+Page.init({id:'20',title:'ネットワーク構成図',checkLabel:'全体の動きを見る',done:'通信の全体がわかった！',onCheck:()=>Hub.check()});
+Hub.init({subs:SUBS,extraCheck:async()=>{const ok=P.judge();if(ok)P.lock();return ok},async finale(){await M.tap('r-shop');
+  await hop('shopping.jp は？');await back('203.0.113.5');await hop('[Wi-Fi|IP|TCP|HTTP]');
+  await Promise.all([1,2,3].map(i=>sleep(i*200).then(()=>back('#'+i))));await M.go('top');toast('https://shopping.jp');await sleep(800);M.hideFinger()}});
+</script>

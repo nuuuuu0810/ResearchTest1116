@@ -1,0 +1,61 @@
+<!-- title: コンピュータの動作 -->
+<!-- use: puzzle,mock -->
+<style>
+.bd{position:absolute;left:28px;right:28px;top:14px;bottom:14px;display:grid;grid-template-columns:260px 380px 1fr;gap:34px;align-items:center}
+.fw{display:flex;flex-direction:column;gap:0}
+.st{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;font-size:12.5px;font-weight:600}
+.st .slot{height:38px;min-width:0}.st .slot .piece{height:36px;padding:4px 8px;font-size:11.5px}
+.fw .tri{border-left-width:7px;border-right-width:7px;border-top-width:7px;margin:3px 0 3px 70px}
+.st.act{background:#f5f5f7;border-radius:8px}
+.pl{margin-top:16px;border-top:1.5px solid var(--t);padding-top:12px}
+.pl .pool{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.pl .piece{padding:5px 9px;font-size:11.5px}
+.in{position:relative;height:560px;border:1.5px solid var(--t);border-radius:18px}
+.in .lab{position:absolute;left:14px;top:10px;font-size:12px;font-weight:700;color:var(--s)}
+.dv{position:absolute;border:1.5px solid var(--t);border-radius:12px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:700;transition:background .25s,color .25s}
+.dv .ico{width:30px;height:30px}
+.dv.on{background:#111;color:#fff}
+.dv small{font-size:10px;font-weight:600;color:var(--s)}.dv.on small{color:#c7c7cc}
+.cpu{position:absolute;left:180px;top:150px;width:240px;height:250px;border:2px solid var(--t);border-radius:16px}
+.cpu>b{position:absolute;left:12px;top:8px;font-size:12px}
+.regs{display:flex;gap:4px;margin-top:2px}.regs i{font-style:normal;font-family:ui-monospace,Menlo,monospace;font-size:10px;border:1px solid currentColor;border-radius:4px;padding:1px 4px;min-width:26px;text-align:center}
+.os{position:absolute;left:14px;right:14px;top:40px;height:44px;border:1.5px dashed var(--t);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;transition:background .25s}
+.os.on{background:#111;color:#fff;border-style:solid}
+.mem{display:flex;gap:3px;margin-top:2px}.mem i{width:16px;height:12px;border:1px solid currentColor;border-radius:2px;transition:background .3s}.mem i.f{background:currentColor}
+</style>
+<div class="bd">
+ <div id="mock"></div>
+ <div><div class="fw" id="fw"></div><div class="pl"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div></div>
+ <div class="in" id="in"><span class="lab">スマホの中</span>
+  <div class="os" id="d-os"></div>
+  <div class="dv" id="d-in" style="left:20px;top:150px;width:130px;height:100px"></div>
+  <div class="dv" id="d-out" style="left:20px;top:300px;width:130px;height:100px"></div>
+  <div class="cpu"><b>CPU</b>
+   <div class="dv" id="d-ctl" style="left:20px;top:36px;width:200px;height:56px;flex-direction:row;gap:8px"></div>
+   <div class="dv" id="d-reg" style="left:20px;top:102px;width:200px;height:60px"></div>
+   <div class="dv" id="d-alu" style="left:20px;top:172px;width:200px;height:60px;flex-direction:row;gap:8px"></div></div>
+  <div class="dv" id="d-mem" style="right:20px;top:150px;width:150px;height:110px"></div>
+  <div class="dv" id="d-sto" style="right:20px;top:290px;width:150px;height:110px"></div>
+ </div>
+</div>
+<script>
+const D={in:['入力装置','touch','タッチパネル'],os:['OS','gear',''],sto:['補助記憶装置','disk','ずっと保存'],mem:['主記憶装置','memory','一時的に置く'],ctl:['制御装置','cpu',''],reg:['レジスタ','register',''],alu:['演算装置','calc',''],out:['出力装置','display','ディスプレイ']};
+$('#d-os').innerHTML=ic('gear',22)+'OS（アプリと機械の仲立ち）';
+['in','out','sto','ctl','alu'].forEach(k=>$('#d-'+k).innerHTML=`${ic(D[k][1],30)}<span>${D[k][0]}${D[k][2]?`<br><small>${D[k][2]}</small>`:''}</span>`);
+$('#d-reg').innerHTML=`<span>レジスタ</span><div class="regs"><i id="r1">-</i><i id="r2">-</i><i id="r3">-</i></div>`;
+$('#d-mem').innerHTML=`${ic('memory',30)}主記憶装置<div class="mem">${'<i></i>'.repeat(8)}</div>`;
+const ST=[['ブラウザをタッチ','in'],['どのアプリか判断','os'],['プログラムを読み出す','sto'],['プログラムを一時的に置く','mem'],['命令を取り出して解読','ctl'],['計算する値を入れる','reg'],['表示する内容を計算','alu'],['画面に表示','out']];
+const HN={in:'指の位置を受け取るのは？',os:'アプリを動かす管理役',sto:'アプリがずっと入っている所',mem:'すぐ使えるように置く所',ctl:'命令を読んで指示する',reg:'CPUの中の小さな入れ物',alu:'計算するのは？',out:'画面に出すのは？'};
+$('#fw').innerHTML=ST.map(([t,k],i)=>`<div class="st" data-i="${i}"><span>${t}</span><div class="slot" data-accept="${k}" data-hint="${HN[k]}"></div></div>`).join('<i class="tri"></i>');
+const pieces={};Object.entries(D).forEach(([k,v])=>pieces[k]={label:v[0],icon:v[1]});pieces.x1={label:'プリンター',icon:'doc'};
+const P=new Puzzle({root:$('#fw'),pool:$('#pool'),pieces});
+const M=new Mock($('#mock'),{scale:.92});M.go('home');
+const LBL=['x:60 y:720','ブラウザ','browser.app','読み込み','命令：描画','R1=60','描画データ','画面'];
+const act=[async()=>{await M.go('home');await M.tap('browser')},async()=>{},async()=>{},async()=>{$$('.mem i').forEach((e,i)=>setTimeout(()=>e.classList.add('f'),i*60))},async()=>{},async()=>{$('#r1').textContent='60';$('#r2').textContent='720';$('#r3').textContent='1'},async()=>{},async()=>{await M.go('search',{query:''})}];
+Page.init({id:'18',title:'コンピュータの動作',nextLabel:'システム配置へ戻る',done:'中の動きがわかった！',guide:()=>[$('#fw .slot'),'だれの仕事？'],
+ async onCheck(){const r=P.check(),bad=new Set([...r.wrong,...r.empty]);let prev=null;$$('.dv,.os').forEach(d=>d.classList.remove('on'));$$('.mem i').forEach(e=>e.classList.remove('f'));
+  for(let i=0;i<ST.length;i++){const row=$(`.st[data-i="${i}"]`),s=$('.slot',row);row.classList.add('act');
+   if(bad.has(s)){row.classList.remove('act');Eng.point(s,s.dataset.hint);return false}
+   const d=$('#d-'+ST[i][1]);if(prev)await Wire.send(prev,d,LBL[i],{dur:550});$$('.dv,.os').forEach(x=>x.classList.remove('on'));d.classList.add('on');await act[i]();await sleep(350);row.classList.remove('act');s.classList.add('ok');prev=d}
+  $$('.dv,.os').forEach(x=>x.classList.remove('on'));M.hideFinger();P.lock();return true}});
+</script>

@@ -1,0 +1,54 @@
+<!-- title: 理想の業務フローを可視化 -->
+<!-- use: puzzle -->
+<style>
+.bd{position:absolute;left:28px;right:300px;top:0;bottom:0;display:flex;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:170px 230px 150px 230px 170px;grid-template-rows:auto;column-gap:18px;align-items:stretch}
+.lane{height:600px}
+.lane .lb{flex:1;display:grid;grid-template-rows:1fr 1fr 1fr;align-items:center;justify-items:center;position:relative}
+.vgcol{display:grid;grid-template-rows:46px 1fr 1fr 1fr;align-items:center}
+.vg{height:120px;border:1.5px solid var(--l);border-radius:14px;position:relative;overflow:hidden;background:#fafafa}
+.vg.empty{border-style:dashed;background:#fff}
+.vg .a{position:absolute;transform:translate(-50%,-50%);line-height:0}
+.mid{display:grid;grid-template-rows:46px 1fr 1fr 1fr;align-items:center}
+.harrow{height:3px;background:#8e8e93;position:relative;margin:0 -24px}
+.harrow::after{content:"";position:absolute;top:-6px;border:7.5px solid transparent}
+.harrow.r::after{right:-2px;border-left:11px solid #8e8e93}.harrow.l::after{left:-2px;border-right:11px solid #8e8e93}
+.vtri{position:absolute;left:50%;transform:translateX(-50%);border-left:12px solid transparent;border-right:12px solid transparent;border-top:12px solid #8e8e93}
+.slot.sq.act{box-shadow:0 0 0 3px #111}
+/* 小さなアニメ */
+@keyframes tapA{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(.8)}}
+@keyframes flyR{0%{left:40%;opacity:0}20%{opacity:1}100%{left:96%;opacity:0}}
+@keyframes flyL{0%{left:60%;opacity:0}20%{opacity:1}100%{left:4%;opacity:0}}
+@keyframes chk{0%,30%{opacity:0;transform:translate(-50%,-50%) scale(.4)}50%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes drop{0%{top:-10%}60%,100%{top:62%}}
+@keyframes drive{0%{left:-10%}100%{left:110%}}
+@keyframes stack{0%,20%{top:-20%}60%,100%{top:var(--y)}}
+.loop{animation-duration:1.8s;animation-iteration-count:infinite;animation-timing-function:ease-in-out}
+</style>
+<div class="bd"><div class="grid">
+ <div class="vgcol"><span></span><div class="vg empty" id="v0"></div><span></span><div class="vg empty" id="v4"></div></div>
+ <div class="lane"><div class="lh"></div><div class="lb" id="lc"></div></div>
+ <div class="mid"><span></span><div class="harrow r"></div><span></span><div class="harrow l"></div></div>
+ <div class="lane"><div class="lh"></div><div class="lb" id="ls"></div></div>
+ <div class="vgcol"><span></span><div class="vg empty" id="v1"></div><div class="vg empty" id="v2"></div><div class="vg empty" id="v3"></div></div>
+</div></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div>
+<script>
+const L=$$('.lane');L[0].firstElementChild.innerHTML=ic('user',22,'#fff')+'お客さん';L[1].firstElementChild.innerHTML='店舗'+ic('store',24,'#fff');
+const S=(id,acc,hint)=>`<div class="slot sq" id="${id}" data-accept="${acc}" data-hint="${hint}"></div>`;
+$('#lc').innerHTML=S('n0','order','最初にすることは？')+'<span></span>'+S('n4','arrive','最後に受け取るのは？');
+$('#ls').innerHTML=S('n1','check','まず内容を確かめる')+S('n2','pack','送る前に…')+S('n3','ship','箱を運ぶのは？')+'<i class="vtri" style="top:30%"></i><i class="vtri" style="top:63%"></i>';
+const A={order:['phone','注文'],check:['clipboard','注文確認'],pack:['boxopen','商品発送準備'],ship:['truck','発送'],arrive:['grocery','商品到着'],x1:['receiver','電話受付'],x2:['store','店頭販売']};
+const pieces={};Object.entries(A).forEach(([k,v])=>pieces[k]={label:v[1],icon:v[0]});
+const VG={
+ order:`<span class="a loop" style="left:30%;top:50%;animation-name:tapA">${ic('phone',54)}</span><span class="a loop" style="top:45%;animation-name:flyR">${ic('doc',26)}</span>`,
+ check:`<span class="a" style="left:38%;top:50%">${ic('doc',54)}</span><span class="a loop" style="left:70%;top:58%;animation-name:chk">${ic('check',34)}</span>`,
+ pack:`<span class="a loop" style="left:50%;--y:66%;animation-name:stack">${ic('box',40)}</span><span class="a" style="left:50%;top:84%">${ic('boxopen',0)}</span><span class="a loop" style="left:30%;--y:66%;animation-name:stack;animation-delay:.4s">${ic('apple',30)}</span><span class="a loop" style="left:72%;--y:66%;animation-name:stack;animation-delay:.8s">${ic('grape',30)}</span>`,
+ ship:`<span class="a loop" style="top:55%;animation-name:drive;animation-timing-function:linear">${ic('truck',56)}</span>`,
+ arrive:`<span class="a" style="left:66%;top:56%">${ic('house',58)}</span><span class="a loop" style="left:30%;animation-name:drop">${ic('grocery',40)}</span>`,
+ x1:`<span class="a loop" style="left:50%;top:50%;animation-name:tapA">${ic('receiver',50)}</span>`,x2:`<span class="a" style="left:50%;top:50%">${ic('store',56)}</span>`};
+const P=new Puzzle({root:$('.grid'),pool:$('#pool'),pieces,tile:true,onChange:vg});
+function vg(){for(let i=0;i<5;i++){const v=$('#v'+i),id=P.get($('#n'+i));v.className='vg'+(id?'':' empty');v.innerHTML=id?VG[id]:''}}
+Page.init({id:'03',title:'理想の業務フローを可視化',done:'理想の流れができた！',guide:()=>[$('#n0'),'どこから始まる？'],
+ async onCheck(){if(!P.judge())return false;P.lock();for(let i=0;i<5;i++){$('#n'+i).classList.add('act');$('#v'+i).classList.add('lit');await sleep(650);$('#n'+i).classList.remove('act');$('#v'+i).classList.remove('lit')}return true}});
+</script>

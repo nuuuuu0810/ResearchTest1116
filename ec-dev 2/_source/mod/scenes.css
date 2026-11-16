@@ -1,0 +1,12 @@
+/* ===== リスク → 対応（スマホを中心に、左右に吹き出し） ===== */
+.sc{position:absolute;left:0;right:300px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:56px}
+.sc-col{width:300px;display:flex;flex-direction:column;justify-content:center;gap:26px;height:100%}
+.co{display:flex;align-items:center;gap:12px;transition:opacity .3s}
+.sc-col.l .co{flex-direction:row}.sc-col.r .co{flex-direction:row-reverse}
+.co .tx{flex:1;border:1.5px solid var(--t);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600;line-height:1.45;display:flex;gap:9px;align-items:center;background:#fff}
+.co .tx .ico{width:22px;height:22px}
+.co.wait{opacity:.28}.co.wait .tx{border-style:dashed}
+.co.cur .tx{box-shadow:0 0 0 3px rgba(0,0,0,.08)}
+.co.done .slot[data-off]{opacity:1}
+.co.done .tx{border-color:var(--l)}
+.sc-ph{display:flex;justify-content:center}

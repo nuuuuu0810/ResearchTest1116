@@ -1,0 +1,49 @@
+<!-- title: パケット交換方式 -->
+<!-- use: puzzle,linerisk -->
+<style>
+#net{position:absolute;left:28px;right:330px;top:16px;height:440px}
+#net svg{position:absolute;inset:0}
+.nd{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;font-size:11px;font-weight:700;gap:3px;z-index:2}
+.nd .b{width:54px;height:54px;border-radius:50%;border:1.5px solid var(--t);background:#fff;display:flex;align-items:center;justify-content:center}
+.nd .b .ico{width:28px;height:28px}
+.nd.bad .b{border-color:var(--ng);color:var(--ng)}
+.pk{position:absolute;transform:translate(-50%,-50%);z-index:3;background:#111;color:#fff;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:700;white-space:nowrap}
+.pk.big{padding:9px 16px;font-size:12px}.pk.o{background:#fff;color:#111;border:1.5px solid #111}
+.pk.lost{animation:lost .6s forwards}@keyframes lost{to{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
+#got{position:absolute;left:28px;top:470px;font-size:12px;font-weight:700;display:flex;gap:6px;align-items:center}
+#got span{min-width:28px;height:26px;border:1.5px solid #111;border-radius:6px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+</style>
+<div id="net"><svg id="edges" width="100%" height="440"></svg></div><div id="got"></div>
+<div class="lr" id="lr"><div class="ln"></div><div class="end" style="left:56px" id="eP"></div><div class="end" style="right:56px" id="eS"></div></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div>
+<script>
+$('#eP').innerHTML=ic('phone',44)+'スマホ';$('#eS').innerHTML=ic('server',44)+'サーバー';
+const N={S:[1000,220,'server','サーバー'],R5:[800,220,'router',''],R2:[580,90,'router',''],R3:[580,220,'router',''],R4:[580,350,'router',''],R1:[340,220,'router',''],P:[100,220,'phone','スマホ'],U:[340,60,'user','ほかの人']};
+const E=[['S','R5'],['R5','R2'],['R5','R3'],['R5','R4'],['R2','R1'],['R3','R1'],['R4','R1'],['R1','P'],['U','R1']];
+$('#edges').innerHTML=E.map(([a,b])=>`<line x1="${N[a][0]}" y1="${N[a][1]}" x2="${N[b][0]}" y2="${N[b][1]}" stroke="#c7c7cc" stroke-width="2"/>`).join('');
+Object.entries(N).forEach(([k,v])=>$('#net').insertAdjacentHTML('beforeend',`<div class="nd" id="n${k}" style="left:${v[0]}px;top:${v[1]}px"><span class="b">${ic(v[2],28)}</span>${v[3]}</div>`));
+async function tr(l,route,{dur=420,cls='',lose=null}={}){const p=h(`<div class="pk ${cls}">${l}</div>`);$('#net').appendChild(p);p.style.left=N[route[0]][0]+'px';p.style.top=N[route[0]][1]+'px';await sleep(30);
+ for(let i=1;i<route.length;i++){const b=N[route[i]];p.style.transition=`left ${dur}ms linear,top ${dur}ms linear`;p.style.left=b[0]+'px';p.style.top=b[1]+'px';await sleep(dur);if(lose&&route[i]===lose){p.classList.add('lost');await sleep(600);p.remove();return false}}p.remove();return true}
+const got=$('#got'),add=t=>got.insertAdjacentHTML('beforeend',`<span>${t}</span>`),reset=()=>got.innerHTML='届いた順：';
+const A=['S','R5','R3','R1','P'],B=['S','R5','R2','R1','P'],C=['S','R5','R4','R1','P'];
+const RK=[{k:'split',ic:'box',risk:'大きなデータで回線をひとりじめ',h:'小さく分けよう',
+  async b(){reset();const w=tr('待ってる…',['U','R1'],{dur:1800,cls:'o'});await tr('写真データ（大）',A,{dur:900,cls:'big'});await w;add('写真')},
+  async a(){reset();await Promise.all([1,2,3,4].map(i=>sleep(i*200).then(()=>tr('■',A).then(()=>add('■')))).concat(sleep(300).then(()=>tr('ほかの人',['U','R1','P'],{cls:'o'}))))}},
+ {k:'num',ic:'sort',risk:'バラバラに届くと順番がわからない',h:'何番目かわかるように',
+  async b(){reset();await Promise.all([3,1,4,2].map((n,i)=>sleep(i*200).then(()=>tr('■',A).then(()=>add('?')))))},
+  async a(){reset();await Promise.all([3,1,4,2].map((n,i)=>sleep(i*200).then(()=>tr(n,A).then(()=>add(n)))));await sleep(300);reset();[1,2,3,4].forEach(add)}},
+ {k:'route',ic:'alert',risk:'1つの道がこわれると届かない',h:'道は1本じゃない',
+  async b(){reset();$('#nR3').classList.add('bad');await Promise.all([1,2,3,4].map((n,i)=>sleep(i*200).then(()=>tr(n,['S','R5','R3'],{lose:'R3'}))));add('届かない')},
+  async a(){reset();await Promise.all([1,2,3,4].map((n,i)=>sleep(i*200).then(()=>tr(n,i%2?C:B).then(()=>add(n)))))}},
+ {k:'resend',ic:'question',risk:'途中で1つなくなった',h:'足りなければ…',
+  async b(){reset();await Promise.all([1,2,3,4].map((n,i)=>sleep(i*200).then(()=>tr(n,i%2?C:B,{lose:n===3?'R2':null}).then(ok=>ok&&add(n)))));add('3がない')},
+  async a(){reset();[1,2,4].forEach(add);await tr('3をもう一度',['P','R1','R4','R5','S'],{dur:280,cls:'o'});await tr(3,C);reset();[1,2,3,4].forEach(add)}}];
+RK.forEach((r,i)=>$('#lr').insertAdjacentHTML('beforeend',`<div class="rk wait" data-avoid="1" style="left:${22+i*19}%" data-i="${i}"><div class="slot sq" data-accept="${r.k}" data-hint="${r.h}" data-off="1"></div><div class="tx">${ic(r.ic,18)}${r.risk}</div></div>`));
+const P=new Puzzle({root:$('#lr'),pool:$('#pool'),tile:true,pieces:{split:{label:'小さく分ける',icon:'scissors'},num:{label:'番号を付ける',icon:'sort'},route:{label:'別の道で送る',icon:'route'},resend:{label:'もう一度送る',icon:'refresh'},x1:{label:'回線を予約',icon:'receiver'},x2:{label:'まとめて送る',icon:'box'}}});
+let i=0;async function show(){$$('.rk').forEach((r,k)=>{r.classList.toggle('cur',k===i);if(k===i){r.classList.remove('wait');$('.slot',r).removeAttribute('data-off')}});P.lock(true);Page.busy(true);await RK[i].b();P.lock(false);Page.busy(false);Eng.guide($(`.rk[data-i="${i}"] .slot`),'どう解決する？')}
+Page.init({id:'22',title:'パケット交換方式',nextLabel:'ネットワーク構成図へ戻る',done:'止まらず、みんなで使える！',
+ async onCheck(){if(!P.judge())return false;P.lock(true);await RK[i].a();const r=$(`.rk[data-i="${i}"]`);$('.slot',r).setAttribute('data-off','1');r.classList.remove('cur');r.classList.add('done');i++;
+  if(i<RK.length){P.lock(false);await show();return false}
+  reset();await Promise.all([1,2,3,4].map((n,k)=>sleep(k*180).then(()=>tr(n,[B,A,C][k%3]).then(()=>add(n)))).concat([tr('ほかの人',['U','R1','P'],{cls:'o'})]));return true}});
+show();
+</script>

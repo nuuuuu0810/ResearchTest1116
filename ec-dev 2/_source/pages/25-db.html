@@ -1,0 +1,30 @@
+<!-- title: データベース設計 -->
+<!-- use: puzzle,mock -->
+<style>
+.bd{position:absolute;left:290px;right:28px;top:0;bottom:0;display:flex;align-items:center;gap:34px}
+.tbs{flex:1;display:flex;gap:16px}
+.tb{flex:1;border:1.5px solid var(--t);border-radius:16px;position:relative;padding:34px 12px 14px}
+.tb .hd{position:absolute;top:-15px;left:50%;transform:translateX(-50%);background:var(--hd);color:#fff;border-radius:16px;padding:6px 16px;font-size:12px;font-weight:700;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.tb .slot.bin{min-height:380px;border:none!important;justify-content:center;align-content:flex-start;gap:10px}
+.tb.lit{box-shadow:0 0 0 3px #111}
+.choices.l .pool{gap:10px}
+</style>
+<div class="choices l"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div>
+<div class="bd"><div class="tbs">
+ <div class="tb" id="tP"><span class="hd"></span><div class="slot bin" id="bP" data-accept="img|nm|pr|st" data-hint="商品そのものの情報"></div></div>
+ <div class="tb" id="tC"><span class="hd"></span><div class="slot bin" id="bC" data-accept="name|addr|tel" data-hint="お客さんの情報"></div></div>
+ <div class="tb" id="tO"><span class="hd"></span><div class="slot bin" id="bO" data-accept="onm|oqty|paid" data-hint="注文ごとの情報"></div></div></div>
+ <div id="mock"></div></div>
+<script>
+[['tP','商品のデータ'],['tC','お客様のデータ'],['tO','注文のデータ']].forEach(([i,t])=>$(`#${i} .hd`).innerHTML=ic('db',14,'#fff')+t);
+const P=new Puzzle({root:$('.tbs'),pool:$('#pool'),tile:true,pieces:{img:{label:'商品の画像',icon:'images'},nm:{label:'商品名',icon:'box'},pr:{label:'1個の値段',icon:'money'},st:{label:'在庫の数',icon:'inventory'},
+ name:{label:'名前',icon:'badge'},addr:{label:'住所',icon:'house'},tel:{label:'電話番号',icon:'receiver'},onm:{label:'注文した商品',icon:'boxopen'},oqty:{label:'注文した個数',icon:'add'},paid:{label:'支払い済みか',icon:'transfer'},x1:{label:'今日の天気',icon:'sun'}}});
+const M=new Mock($('#mock'),{scale:.86});M.go('top');
+const ERR={bP:['results','商品を表示できません'],bC:['info','お届け先を保存できません'],bO:['done','注文を記録できません']};
+Page.init({id:'25',title:'データベース設計',done:'データベースが動いた！',guide:()=>[$('#bP'),'仲間ごとに分けよう'],
+ async onCheck(){const r=P.check(),bad=[...r.wrong,...r.empty];M.S.cart=[];await M.go('top');await M.step('search');
+  for(const k of ['bP','bC','bO']){const b=$('#'+k);if(bad.includes(b)){await M.go('error',{errTitle:ERR[k][1],errIcon:'alert'});P.judge();return false}
+   b.closest('.tb').classList.add('lit');await Wire.send(b,$('#mock .scr'),'データ',{dur:600});b.closest('.tb').classList.remove('lit');
+   if(k==='bP'){await M.step('select');await M.step('qty');await M.step('add');await M.step('opencart')}if(k==='bC')await M.step('pay');if(k==='bO')await M.step('confirm')}
+  P.judge();P.lock();M.hideFinger();return true}});
+</script>

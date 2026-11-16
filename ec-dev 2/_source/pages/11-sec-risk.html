@@ -1,0 +1,13 @@
+<!-- title: 情報セキュリティリスク -->
+<!-- use: puzzle,mock,scenes -->
+<script>
+const FAKE=`<div style="padding:44px 14px 0;display:flex;flex-direction:column;gap:8px"><div class="urlbar" style="margin:0;color:#d70015" data-k="url">${ic('alert',14)} shopping-jp.xyz</div><b style="font-size:16px">全品90%OFF</b><div class="card2" data-k="cardin">カード番号<br>4980 1234 5678 9012</div><div class="ybtn">今すぐ購入</div></div>`;
+const SC=new Scenes({pieces:{phish:{label:'フィッシング詐欺',icon:'magnify'},spoof:{label:'なりすまし',icon:'user'},mal:{label:'マルウェア',icon:'alert'},tap:{label:'盗聴',icon:'eye'},x1:{label:'著作権侵害',icon:'copyright'},x2:{label:'誇大広告',icon:'megaphone'}},
+ list:[
+  {short:'本物そっくりの偽サイト',icon:'world',accept:['phish'],hint:'偽サイトで釣る',target:'url',async scene(m){await m.go('search',{query:'ショッピング',fake:true});await m.tap('r-fake');await m.go('custom',{html:FAKE},{label:'偽サイト'})},async fix(){}},
+  {short:'他人のパスワードでログイン',icon:'lock',accept:['spoof'],hint:'本人のふり',target:'f-name',async scene(m){await m.go('info',{filled:true});m.badge('別の人がログイン中',{icon:'user',cls:'ng',top:330})},async fix(){}},
+  {short:'あやしいアプリを入れさせる',icon:'phone',accept:['mal'],hint:'悪いプログラム',target:'warn',async scene(m){await m.go('custom',{html:`<div class="err-scr" data-k="warn">${ic('alert',56,'#d70015')}<b>ウイルスに感染！</b><small>このアプリを入れてください</small><div class="ybtn" style="width:150px">インストール</div></div>`},{label:'ニセの警告'})},async fix(){}},
+  {short:'Wi-Fiで通信をのぞかれる',icon:'wifi',accept:['tap'],hint:'通信をこっそり…',target:'f-card',async scene(m){await m.go('info',{filled:true});m.badge('card=4980123456789012',{icon:'eye',cls:'ng',top:60})},async fix(){}}]});
+SC.list.forEach(s=>s.ask='これは何？');
+Page.init({id:'11',title:'情報セキュリティリスク',done:'手口を見ぬけた！',onCheck:()=>SC.check()});SC.start();
+</script>

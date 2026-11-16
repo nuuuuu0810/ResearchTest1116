@@ -1,0 +1,19 @@
+<!-- title: 画面レイアウト -->
+<!-- use: puzzle,mock,scenes -->
+<style>
+.th-font .sh-logo,.th-font .banner b{font-family:"Times New Roman",serif!important;font-style:italic}.th-font .cat{font-family:"Courier New",monospace!important}.th-font .sec-t{font-family:cursive!important}.th-font .rec{font-family:fantasy!important}
+.th-size .pitem .nm{font-size:7px!important}.th-size .pitem:nth-child(2) .nm{font-size:20px!important}.th-size .pitem .pr{font-size:22px!important}
+.th-color .cartv{background:#ffef3a}.th-color .cartv *{color:#ffd400!important;border-color:#ffd400!important}.th-color .ybtn{background:#fff36b!important}
+.th-btn .ybtn{height:14px!important;font-size:6px!important;margin:0 80px}.th-btn .card2 .lb{display:none}
+</style>
+<script>
+const go=(n,p,l)=>m=>m.go(n,Object.assign({theme:'',textOnly:false,query:'くだもの',cart:[{id:'apple',qty:1},{id:'grape',qty:2},{id:'pine',qty:1}],filled:true},p),{label:l});
+const SC=new Scenes({pieces:{font:{label:'書体をそろえる',icon:'doc'},size:{label:'文字の大きさに決まり',icon:'textsize'},img:{label:'写真を見せる',icon:'images'},cont:{label:'色の差を大きく',icon:'sun'},btn:{label:'押しやすいボタン',icon:'tap'},x1:{label:'全部赤い太字',icon:'alert'},x2:{label:'色を増やす',icon:'piechart'}},
+ list:[
+  {short:'書体がバラバラ',icon:'doc',accept:['font'],hint:'書体を…',target:'banner',scene:go('top',{theme:'th-font'}),fix:go('top',{})},
+  {short:'文字の大きさがバラバラ',icon:'textsize',accept:['size'],hint:'大きさに決まりを',target:'p-apple',scene:go('results',{theme:'th-size'}),fix:go('results',{})},
+  {short:'文字だけで伝わらない',icon:'images',accept:['img'],hint:'ひと目でわかるのは？',target:'img',scene:go('detail',{sel:'grape',textOnly:true}),fix:go('detail',{sel:'grape'})},
+  {short:'色が見づらい',icon:'sun',accept:['cont'],hint:'背景と文字の差',target:'total',scene:go('cart',{theme:'th-color'}),fix:go('cart',{})},
+  {short:'ボタンが押しにくい',icon:'tap',accept:['btn'],hint:'指で押す大きさ',target:'confirm',scene:go('info',{theme:'th-btn'}),async fix(m){await go('info',{})(m);await m.tap('confirm');await m.go('done')}}]});
+Page.init({id:'14',title:'画面レイアウト',done:'見やすい画面になった！',onCheck:()=>SC.check()});SC.start();
+</script>

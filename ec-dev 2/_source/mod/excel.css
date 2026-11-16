@@ -1,0 +1,34 @@
+/* ===== 表計算（エクセル風） ===== */
+.xl{border:1.5px solid var(--t);border-radius:10px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.xl-bar{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12px;font-weight:700;border-bottom:1px solid var(--l)}
+.xl-bar .d{width:9px;height:9px;border-radius:50%;background:#d2d2d7}
+.xl-tabs{display:flex;gap:2px;padding:6px 10px 0;border-bottom:1px solid var(--l);font-size:12px}
+.xl-tabs span{padding:5px 14px;border-radius:6px 6px 0 0;color:var(--s);cursor:pointer}
+.xl-tabs span.on{background:#f5f5f7;color:#111;font-weight:700}
+.xl-rib{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#f5f5f7;min-height:58px}
+.rb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 10px;border-radius:8px;border:1.5px solid transparent;font-size:10px;font-weight:600;cursor:pointer;background:#fff}
+.rb .ico{width:22px;height:22px}
+.rb.on{border-color:#111}
+.rb.dis{opacity:.35;pointer-events:none}
+.xl-fx{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--l);font-family:ui-monospace,Menlo,monospace;font-size:12px;min-height:30px}
+.xl-fx .nm{width:44px;border-right:1px solid var(--l);color:var(--s)}
+.xl-fx i{font-style:italic;color:var(--s);font-family:serif}
+.xl-grid{overflow:auto;flex:1;position:relative}
+.xl-grid table{border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.xl-grid th{background:#f5f5f7;color:var(--s);font-weight:500;border:1px solid #e5e5ea;position:sticky;top:0;z-index:2;height:24px;font-size:11px}
+.xl-grid td{border:1px solid #e5e5ea;padding:0 8px;height:28px;white-space:nowrap;color:#111}
+.xl-grid td.rn{background:#f5f5f7;color:var(--s);text-align:center;font-size:11px;position:sticky;left:0;z-index:1;padding:0 6px}
+.xl-grid td.hd{font-weight:700}
+.xl-grid td.lk{color:#111}
+.xl-grid td.num{text-align:right}
+.xl-grid td.hit{background:#e8f0fe}
+.xl-grid td.ed{background:#fff;padding:2px 4px}
+.xl-grid td.sel{outline:2px solid #111;outline-offset:-2px}
+.xsel{height:24px;border:1.5px solid #111;border-radius:6px;font-size:11.5px;padding:0 4px;background:#fff;cursor:pointer}
+.xin{width:38px;height:22px;border:1.5px solid #111;border-radius:5px;text-align:center;font-size:12px;font-weight:700;font-family:inherit}
+.xin:placeholder-shown{border-color:#ff9500;background:#fff8ec}
+.xcell{display:flex;align-items:center;gap:5px;font-size:11.5px}
+.xval{margin-left:auto;font-weight:700;min-width:30px;text-align:right}
+.chk{display:flex;flex-direction:column;gap:10px}
+.chk div{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+.chk .st{width:26px;height:26px;border-radius:50%;border:1.5px dashed #a1a1a6;flex:none;display:flex;align-items:center;justify-content:center}

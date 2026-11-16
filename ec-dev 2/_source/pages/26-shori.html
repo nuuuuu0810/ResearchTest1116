@@ -1,0 +1,39 @@
+<!-- title: 処理の流れ -->
+<!-- use: puzzle,mock -->
+<style>
+.sw{position:absolute;left:280px;right:28px;top:60px;display:grid;grid-template-columns:64px repeat(6,1fr);grid-template-rows:270px 150px 170px;border:1.5px solid var(--t);border-radius:12px;overflow:hidden}
+.ln{background:var(--hd);color:#fff;font-size:12px;font-weight:700;writing-mode:vertical-rl;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2em;border-bottom:1px solid #fff}
+.cell{border-bottom:1.5px solid var(--l);border-left:1px dashed var(--l2);display:flex;align-items:center;justify-content:center;position:relative}
+.mini{width:84px;height:172px;border:1.5px solid #111;border-radius:14px;overflow:hidden;position:relative;transition:box-shadow .2s}
+.mini .in{width:270px;height:556px;transform:scale(.311);transform-origin:0 0;position:absolute;left:0;top:0}
+.mini .in .view{position:absolute;inset:0}
+.mini.act{box-shadow:0 0 0 3px #111}
+.sn{position:absolute;bottom:6px;font-size:10px;font-weight:700}
+#procs{position:absolute;left:0;top:0}
+.ps{position:absolute;width:150px;transform:translateX(-50%)}
+.ps .slot{height:64px;width:100%}.ps .slot .piece{height:60px;font-size:11.5px}
+.dbi{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700}
+.dbi .ico{width:38px;height:38px}
+.choices.l .pool{flex-direction:column;gap:10px}
+</style>
+<div class="choices l"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div>
+<div class="sw" id="sw"></div><div id="procs"></div>
+<script>
+const SCR=[['top','トップ'],['results','検索結果'],['detail','商品詳細'],['cart','カート'],['info','注文の確定'],['done','注文完了']];
+const PR=[['find','商品を探す','db','商品DB','検索語で何をする？'],['get','商品の情報を取り出す','db','商品DB','詳細に出す情報は？'],['calc','カートに入れて合計を計算','calc','','合計を出すのは？'],['stock','在庫があるか確かめる','db','商品DB','買える数か確かめる'],['save','注文を記録する','db','注文DB','注文をどうする？']];
+const S0={query:'くだもの',cart:[{id:'apple',qty:1},{id:'grape',qty:2},{id:'pine',qty:1}],sel:'grape',qty:2,filled:true};
+let g=`<div class="ln">画面</div>`+SCR.map(([k,n],i)=>`<div class="cell"><div class="mini" data-i="${i}"><div class="in"><div class="view"><div class="screen nopad">${SCREENS[k](S0)}</div></div></div></div><span class="sn">${n}</span></div>`).join('');
+g+=`<div class="ln">処理</div>`+SCR.map(()=>'<div class="cell"></div>').join('');
+g+=`<div class="ln">データベース</div>`+SCR.map((_,i)=>`<div class="cell" data-db="${i}"></div>`).join('');
+$('#sw').innerHTML=g;
+PR.forEach((p,i)=>{if(p[3])$(`[data-db="${i+1}"]`).innerHTML=`<div class="dbi">${ic('db',38)}${p[3]}</div>`});
+requestAnimationFrame(()=>{const cells=$$('.sw .cell').slice(6,12),oy=relRect($('#app')).y;PR.forEach((p,i)=>{const a=relRect(cells[i]),b=relRect(cells[i+1]);$('#procs').insertAdjacentHTML('beforeend',`<div class="ps" style="left:${(a.r+b.x)/2}px;top:${a.cy-32-oy}px"><div class="slot" data-accept="${p[0]}" data-hint="${p[4]}"></div></div>`)});
+ window.P=new Puzzle({root:$('#procs'),pool:$('#pool'),pieces:Object.assign(Object.fromEntries(PR.map(p=>[p[0],{label:p[1],icon:p[2]==='db'?'transfer':'calc',cls:'row'}])),{x1:{label:'写真を撮る',icon:'camera',cls:'row'},x2:{label:'トラックに積む',icon:'truck',cls:'row'}})})});
+Page.init({id:'26',title:'処理の流れ',done:'画面と処理がつながった！',guide:()=>[$('.ps .slot'),'画面の間の処理は？'],
+ async onCheck(){const r=P.check(),bad=new Set([...r.wrong,...r.empty]);const sl=$$('.ps .slot'),mi=$$('.mini');
+  for(let i=0;i<PR.length;i++){mi.forEach(m=>m.classList.remove('act'));mi[i].classList.add('act');await sleep(300);
+   if(bad.has(sl[i])){Eng.point(sl[i],sl[i].dataset.hint);mi[i].classList.remove('act');return false}
+   await Wire.send(mi[i],sl[i],'',{dur:400});const db=$(`[data-db="${i+1}"] .dbi`);if(db){await Wire.send(sl[i],db,'',{dur:400});await Wire.send(db,sl[i],'',{dur:400})}
+   await Wire.send(sl[i],mi[i+1],'',{dur:400});sl[i].classList.add('ok')}
+  mi.forEach(m=>m.classList.remove('act'));mi[5].classList.add('act');P.lock();return true}});
+</script>

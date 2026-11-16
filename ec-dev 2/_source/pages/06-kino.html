@@ -1,0 +1,51 @@
+<!-- title: 必要な機能の確認 -->
+<!-- use: puzzle,mock -->
+<style>
+.bd{position:absolute;left:28px;right:300px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:90px}
+.fc{position:relative;display:flex;flex-direction:column;align-items:center;width:300px}
+.fc .slot,.fc .prs{width:260px;height:44px}
+.fc .slot .piece{height:40px}
+.prs{border:1.5px solid var(--t);border-radius:7px;display:flex;align-items:center;gap:10px;padding:0 12px;font-size:12.5px;font-weight:600}
+.ov{border:1.5px solid var(--t);border-radius:22px;padding:6px 26px;font-size:12px;font-weight:700}
+.dm{width:220px;height:66px;position:relative;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;gap:6px}
+.dm::before{content:"";position:absolute;inset:0;border:1.5px solid var(--t);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#111}
+.dm::after{content:"";position:absolute;inset:2px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#fff}
+.dm span{position:relative;z-index:1;display:flex;gap:5px;align-items:center}
+.fc .tri{margin:5px auto}
+.yn{position:absolute;font-size:11px;font-weight:700}
+#loop{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.act{box-shadow:0 0 0 3px #111!important}
+</style>
+<div class="bd"><div id="mock"></div>
+ <div class="fc" id="fc">
+  <svg id="loop" width="300" height="10"></svg>
+  <div class="ov">開始</div><i class="tri"></i>
+  <div class="slot" data-k="search" data-accept="search" data-hint="まずは探す"><span class="ph">機能</span></div><i class="tri"></i>
+  <div class="slot" data-k="detail" data-accept="detail" data-hint="くわしく見る"><span class="ph">機能</span></div><i class="tri"></i>
+  <div class="slot" data-k="add" data-accept="add" data-hint="買う物をためる"><span class="ph">機能</span></div><i class="tri"></i>
+  <div class="dm" id="dm"><span>${''}</span></div><i class="tri"></i>
+  <div class="prs" data-k="view">${''}</div><i class="tri"></i>
+  <div class="slot" data-k="pay" data-accept="pay" data-hint="届け先と支払い"><span class="ph">機能</span></div><i class="tri"></i>
+  <div class="slot" data-k="fix" data-accept="fix" data-hint="最後に決める"><span class="ph">機能</span></div><i class="tri"></i>
+  <div class="ov">終了</div>
+  <span class="yn" id="yes">Yes</span><span class="yn" id="no">No</span>
+ </div></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool" style="flex-direction:column;gap:10px"></div></div>
+<script>
+$('#dm span').innerHTML=ic('question',18)+'まだ買う商品がある？';$('[data-k="view"]').innerHTML=ic('list',18)+'注文内容を確認';
+const pieces={search:['商品を検索する','searchinv'],detail:['商品の詳細を見る','tap'],add:['カートに商品を追加','cart'],pay:['決済・お届け先の入力','wallet'],fix:['注文を確定する','tick'],x1:['電話で注文を受ける','receiver'],x2:['商品を梱包する','boxopen']};
+Object.keys(pieces).forEach(k=>pieces[k]={label:pieces[k][0],icon:pieces[k][1],cls:'row'});
+const P=new Puzzle({root:$('#fc'),pool:$('#pool'),pieces});const M=new Mock($('#mock'));M.go('top');
+function loop(){const f=relRect($('#fc')),a=relRect($('#fc [data-k="search"]')),d=relRect($('#dm'));const x0=a.x-f.x,y1=a.cy-f.y,y2=d.cy-f.y,xd=d.x-f.x+40;
+ $('#loop').setAttribute('height',y2+20);$('#loop').innerHTML=`<path d="M${xd},${y2} H${x0-24} V${y1} H${x0-2}" fill="none" stroke="#111" stroke-width="1.5"/><path d="M${x0-10},${y1-5} L${x0-2},${y1} L${x0-10},${y1+5}" fill="none" stroke="#111" stroke-width="1.5"/>`;
+ $('#yes').style.left=(x0-22)+'px';$('#yes').style.top=(y2-18)+'px';$('#no').style.left=(d.cx-f.x+12)+'px';$('#no').style.top=(d.b-f.y+2)+'px'}
+requestAnimationFrame(loop);
+const K=k=>$(`#fc [data-k="${k}"]`);const act=e=>{$$('#fc .act').forEach(x=>x.classList.remove('act'));if(e)e.classList.add('act')};
+Page.init({id:'06',title:'必要な機能の確認',done:'機能がそろった！',guide:()=>[K('search'),'最初の機能は？'],
+ async onCheck(){if(!P.judge())return false;P.lock();M.S.cart=[];
+  act(K('search'));await M.step('search');act(K('detail'));await M.step('select');await M.step('qty');act(K('add'));await M.step('add');
+  act($('#dm'));M.badge('もう1つ買う → Yes',{top:60});await sleep(800);M.clearBadges();
+  act(K('search'));await M.go('results',{query:'くだもの'});act(K('detail'));await M.tap('p-apple');await M.go('detail',{sel:'apple',qty:1});act(K('add'));await M.tap('add');M.S.cart.push({id:'apple',qty:1});await M.go('detail',{},{push:false});
+  act($('#dm'));M.badge('もうない → No',{top:60});await sleep(800);M.clearBadges();
+  act(K('view'));await M.step('opencart');act(K('pay'));await M.step('pay');act(K('fix'));await M.step('confirm');act();M.hideFinger();return true}});
+</script>

@@ -1,0 +1,50 @@
+<!-- title: 文字のデジタル化 -->
+<!-- use: puzzle,mock -->
+<style>
+.row3{position:absolute;left:28px;right:28px;top:14px;height:580px;display:flex;align-items:center;justify-content:space-between}
+.zh{font-size:12px;font-weight:700;color:var(--s);display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.proc{width:560px;border:1.5px solid var(--t);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.wd{display:flex;gap:10px;align-items:flex-end}
+.cl{display:flex;flex-direction:column;align-items:center;gap:6px;width:76px}
+.cd{font-family:ui-monospace,Menlo,monospace;font-size:15px;font-weight:700;border:1.5px solid var(--t);border-radius:6px;padding:4px 0;width:100%;text-align:center}
+.cl .slot{width:56px;height:56px;min-width:0}.cl .slot .piece{height:52px;justify-content:center;font-size:24px;padding:0}
+.uni{border-collapse:collapse;font-size:12px}
+.uni td{border:1px solid var(--l);width:58px;text-align:center;padding:3px 0}
+.uni td b{display:block;font-size:17px}.uni td span{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--s)}
+.db{width:300px;border:1.5px solid var(--t);border-radius:14px;overflow:hidden}
+.db .th{background:var(--hd);color:#fff;font-weight:700;font-size:12px;padding:8px 12px;display:flex;gap:8px;align-items:center}
+.db table{width:100%;border-collapse:collapse;font-size:11px}
+.db td{border-bottom:1px solid var(--l2);padding:6px 10px;font-family:ui-monospace,Menlo,monospace}
+.db td:first-child{font-family:inherit;color:var(--s);width:70px}
+.flowln{flex:1;height:0;border-top:2px dashed #8e8e93;margin:0 14px;position:relative}
+.choices.b .pool .piece{width:52px;height:52px;justify-content:center;font-size:22px;padding:0}
+</style>
+<div class="row3">
+ <div id="mock"></div><div class="flowln" id="l1"></div>
+ <div><div class="zh">処理（文字コード → 文字）</div><div class="proc" id="proc">
+   <div class="wd" id="w1"></div><div class="wd" id="w2"></div>
+   <div><div class="zh" style="margin-bottom:4px">Unicode 表</div><table class="uni" id="uni"></table></div></div></div>
+ <div class="flowln" id="l2"></div>
+ <div><div class="zh">データベース</div><div class="db"><div class="th" id="dbh"></div><table id="dbt"></table></div></div>
+</div>
+<div class="choices b"><span class="ctag">選択肢</span><div class="pool" id="pool" style="flex:1;margin-left:14px"></div></div>
+<script>
+$('#dbh').innerHTML=ic('db',16,'#fff')+'商品テーブル（すべて文字コード）';
+const U={'ア':'30A2','イ':'30A4','オ':'30AA','グ':'30B0','ジ':'30B8','ッ':'30C3','ツ':'30C4','ブ':'30D6','プ':'30D7','ラ':'30E9','ル':'30EB','レ':'30EC','ン':'30F3','ー':'30FC','ロ':'30ED','5':'0035','0':'0030','1':'0031'};
+const W1=['ア','ッ','プ','ル'],W2=['グ','レ','ー','プ'];const code=w=>w.map(c=>U[c]).join(' ');
+$('#dbt').innerHTML=[['商品名',code(W1)],['商品名',code(W2)],['値段',code(['1','0','0'])],['値段',code(['5','0','0'])],['在庫','5728 5EAB…'],['ボタン','30AB 30FC 30C8…']].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+const ent=Object.entries(U).filter(([c])=>!/\d/.test(c));$('#uni').innerHTML=[0,1].map(r=>'<tr>'+ent.slice(r*8,r*8+8).map(([c,k])=>`<td><b>${c}</b><span>${k}</span></td>`).join('')+'</tr>').join('');
+const HN={'ッ':'30C3と30C4に注意','プ':'30D7と30D6に注意'};
+[[W1,'#w1'],[W2,'#w2']].forEach(([w,s])=>$(s).innerHTML=w.map(c=>`<div class="cl"><div class="cd">${U[c]}</div><div class="slot" data-accept="${c}" data-hint="${HN[c]||U[c]+'を表で探そう'}"></div></div>`).join(''));
+const pieces={};['ア','ッ','プ','ル','グ','レ','ー','ブ','ツ','ラ','ン','イ'].forEach(c=>pieces[c]={label:c,inf:true});
+const M=new Mock($('#mock'),{scale:.9});
+const P=new Puzzle({root:$('#proc'),pool:$('#pool'),pieces,onChange:live});
+const word=s=>$$(s+' .slot').map(x=>P.get(x)||'□').join('');
+function live(){PD.apple.name=word('#w1');PD.grape.name=word('#w2');M.go('results',{query:'くだもの',list:['apple','grape']},{push:false,wait:0})}
+live();
+Page.init({id:'16',title:'文字のデジタル化',nextLabel:'システム配置へ戻る',done:'文字が表示された！',guide:()=>[$('#w1 .slot'),'表で文字を探そう'],
+ async onCheck(){if(!P.judge())return false;P.lock();
+  await Wire.send($('.db'),$('#proc'),code(W1),{dur:700});await Wire.send($('#proc'),$('#mock .scr'),'アップル',{dur:700});
+  await Wire.send($('.db'),$('#proc'),code(W2),{dur:700});await Wire.send($('#proc'),$('#mock .scr'),'グレープ',{dur:700});
+  M.hl('p-apple');M.hl('p-grape');await sleep(800);M.unhl();return true}});
+</script>

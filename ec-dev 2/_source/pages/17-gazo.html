@@ -1,0 +1,50 @@
+<!-- title: 画像のデジタル化 -->
+<!-- use: puzzle,mock -->
+<style>
+.row3{position:absolute;left:28px;right:28px;top:14px;height:580px;display:flex;align-items:center;justify-content:space-between}
+.zh{font-size:12px;font-weight:700;color:var(--s);margin-bottom:8px}
+.proc{width:620px;border:1.5px solid var(--t);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.top2{display:flex;gap:22px;align-items:flex-start}
+#grid{display:grid;grid-template-columns:repeat(12,17px);grid-template-rows:repeat(12,17px);gap:1px;background:#d2d2d7;border:1px solid #d2d2d7;flex:none}
+#grid i{background:#fff;transition:background .25s}
+.codes{display:flex;flex-direction:column;gap:8px;flex:1}
+.cr{display:flex;gap:10px;align-items:center}
+.cr .cd{font-family:ui-monospace,Menlo,monospace;font-size:15px;font-weight:700;border:1.5px solid var(--t);border-radius:6px;padding:7px 10px;width:96px;text-align:center}
+.cr .slot{flex:1;height:42px}
+.nl{position:relative;height:74px;margin:0 6px}
+.nl .bar{position:absolute;left:0;right:0;top:30px;height:2px;background:#111}
+.nl .bar::after{content:"";position:absolute;right:-2px;top:-5px;border:6px solid transparent;border-left:9px solid #111}
+.nl .tk{position:absolute;top:8px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px}
+.nl .tk i{width:20px;height:20px;border-radius:50%;border:1px solid rgba(0,0,0,.25)}
+.nl .tk span{font-family:ui-monospace,Menlo,monospace;font-size:9px;color:var(--s);margin-top:8px}
+.sw{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.25);display:inline-block;flex:none}
+.db{width:250px;border:1.5px solid var(--t);border-radius:14px;overflow:hidden}
+.db .th{background:var(--hd);color:#fff;font-weight:700;font-size:12px;padding:8px 12px;display:flex;gap:8px;align-items:center}
+.db .bd{padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.7;word-break:break-all}
+.flowln{flex:1;height:0;border-top:2px dashed #8e8e93;margin:0 14px}
+.pix{display:grid;grid-template-columns:repeat(12,1fr);width:120px;height:120px}
+</style>
+<div class="row3">
+ <div id="mock"></div><div class="flowln"></div>
+ <div><div class="zh">処理（色コード → 色）</div><div class="proc" id="proc"><div class="top2"><div id="grid"></div><div class="codes" id="codes"></div></div><div class="nl" id="nl"><div class="bar"></div></div></div></div>
+ <div class="flowln"></div>
+ <div><div class="zh">データベース</div><div class="db"><div class="th" id="dbh"></div><div class="bd">apple.png（12×12）<br>FFFFFF FFFFFF 804000 008000 008000 FFFFFF … FF0000 FF0000 FF0000 …</div></div></div>
+</div>
+<div class="choices b"><span class="ctag">選択肢</span><div class="pool" id="pool" style="flex:1;margin-left:14px"></div></div>
+<script>
+$('#dbh').innerHTML=ic('db',16,'#fff')+'商品画像';
+const ART=['....bb.gg...','.....bgg....','...rrbrrr...','..rrrrrrrr..','.rrrrrrrrrr.','.rrrrrrrrrr.','.rrrrrrrrrr.','.rrrrrrrrrr.','..rrrrrrrr..','..rrrrrrrr..','...rr..rr...','............'];
+const NL=[['000000','黒'],['0000FF','青'],['008000','緑'],['00FFFF','水色'],['800080','紫'],['804000','茶'],['808080','灰'],['FF0000','赤'],['FF8000','オレンジ'],['FFC0CB','ピンク'],['FFFF00','黄'],['FFFFFF','白']];
+$('#nl').insertAdjacentHTML('beforeend',NL.map(([c],i)=>`<div class="tk" style="left:${i/(NL.length-1)*100}%"><i style="background:#${c}"></i><span>${c}</span></div>`).join(''));
+const CODE={r:'FF0000',g:'008000',b:'804000','.':'FFFFFF'};
+$('#codes').innerHTML=['r','g','b','.'].map(k=>`<div class="cr"><span class="cd">${CODE[k]}</span><div class="slot" data-c="${k}" data-accept="${CODE[k]}" data-hint="数直線で${CODE[k]}を探そう"></div></div>`).join('');
+$('#grid').innerHTML=ART.join('').split('').map(c=>`<i data-c="${c}"></i>`).join('');
+const pieces={};NL.filter((_,i)=>[0,1,2,5,7,9,10,11].includes(i)).forEach(([c,n])=>pieces[c]={label:n,icon:`<i class="sw" style="background:#${c}"></i>`});
+const M=new Mock($('#mock'),{scale:.9});
+const P=new Puzzle({root:$('#codes'),pool:$('#pool'),pieces,onChange:paint});
+function paint(){$$('#grid i').forEach(d=>{const v=P.get($(`.slot[data-c="${d.dataset.c}"]`));d.style.background=v?'#'+v:'#fff'});
+  M.go('detail',{sel:'apple'},{push:false,wait:0}).then(()=>{M.el('img').innerHTML=`<div class="pix">${$$('#grid i').map(d=>`<i style="background:${d.style.background||'#fff'}"></i>`).join('')}</div>`})}
+paint();
+Page.init({id:'17',title:'画像のデジタル化',nextLabel:'システム配置へ戻る',done:'画像が表示された！',guide:()=>[$('.cr .slot'),'数直線で色を探そう'],
+ async onCheck(){if(!P.judge())return false;P.lock();await Wire.send($('.db'),$('#proc'),'FF0000 008000…',{dur:700});await Wire.send($('#proc'),$('#mock .scr'),'画像',{dur:700});M.hl('img');await sleep(800);M.unhl();return true}});
+</script>

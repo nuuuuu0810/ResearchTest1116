@@ -1,0 +1,13 @@
+<!-- title: セキュリティ対応 -->
+<!-- use: puzzle,mock,scenes -->
+<script>
+const ok=(t,i)=>async m=>{m.clearBadges();m.badge(t,{cls:'ok',icon:i,top:330});await sleep(1000)};
+const SC=new Scenes({pieces:{url:{label:'URLと鍵を確認',icon:'lock'},two:{label:'二段階認証',icon:'phone'},upd:{label:'OSを最新に',icon:'shield'},https:{label:'暗号化',icon:'key'},three:{label:'カードの本人認証',icon:'badge'},x1:{label:'パスワード1234',icon:'calc'},x2:{label:'パスワード使い回し',icon:'refresh'}},
+ list:[
+  {short:'偽サイト',icon:'world',accept:['url'],hint:'アドレス欄を見る',target:'r-fake',async scene(m){await m.go('search',{query:'ショッピング',fake:true})},async fix(m){await m.tap('r-shop');await m.go('top');m.badge('https://shopping.jp',{cls:'ok',icon:'lock',top:330});await sleep(900)}},
+  {short:'他人のパスワードでログイン',icon:'user',accept:['two'],hint:'スマホにコードが届く',target:'f-name',async scene(m){await m.go('info',{filled:true})},fix:ok('確認コード 482915','phone')},
+  {short:'あやしいアプリ',icon:'alert',accept:['upd'],hint:'スマホを新しく保つ',target:'warn',async scene(m){await m.go('custom',{html:`<div class="err-scr" data-k="warn">${ic('alert',56,'#d70015')}<b>ウイルスに感染！</b></div>`},{label:'ニセの警告'})},async fix(m){await m.go('custom',{html:`<div class="err-scr">${ic('shield',56)}<b>ブロックしました</b></div>`},{label:'対策ソフト'});await sleep(900)}},
+  {short:'通信をのぞかれる',icon:'eye',accept:['https'],hint:'読めない形にする',target:'f-card',async scene(m){await m.go('info',{filled:true});m.badge('card=4980123456789012',{icon:'eye',cls:'ng',top:60})},async fix(m){m.clearBadges();m.badge('x9#Qa7!pL2@vR8z…',{icon:'key',cls:'ok',top:60});await sleep(1000)}},
+  {short:'盗んだカードで買い物',icon:'card',accept:['three'],hint:'本人かを確かめる',target:'confirm',async scene(m){await m.go('info',{filled:true,cart:[{id:'pine',qty:9}]})},fix:ok('本人ではないので止めました','badge')}]});
+Page.init({id:'12',title:'セキュリティ対応',done:'セキュリティ対策ができた！',onCheck:()=>SC.check()});SC.start();
+</script>

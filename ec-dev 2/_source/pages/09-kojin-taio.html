@@ -1,0 +1,17 @@
+<!-- title: 個人情報保護対応 -->
+<!-- use: puzzle,mock,scenes -->
+<style>.co .tx small{display:block;font-size:11px;color:var(--ng);font-weight:600;margin-top:2px}</style>
+<script>
+const MAIL='<div class="fi" data-k="f-mail">hanako@example.jp</div>';
+const HIST=`<div class="shop">${shopTop({cart:[]})}<div class="form"><h3>注文履歴</h3><div data-k="hist">${['grape','apple','pine'].map(i=>`<div class="citem"><div class="im">${ic(PD[i].ico,30)}</div><div>${PD[i].name}</div></div>`).join('')}</div></div></div>`;
+const info=async m=>m.go('info',{filled:true,extraFields:MAIL});
+const ok=(t,i)=>async m=>{m.badge(t,{cls:'ok',icon:i,top:330});await sleep(900)};
+const SC=new Scenes({pieces:{lim:{label:'見られる人を限定',icon:'lock'},third:{label:'他社に渡さない',icon:'shield'},enc:{label:'暗号化して保管',icon:'key'},agree:{label:'目的を伝えて同意',icon:'doc'},del:{label:'求めがあれば削除',icon:'trash'},x1:{label:'情報を売る',icon:'money'},x2:{label:'全員に公開',icon:'world'}},
+ list:[
+  {short:'住所<small>家を知られる</small>',icon:'house',accept:['lim'],hint:'だれが見られる？',target:'f-addr',scene:info,fix:ok('担当者だけが見られる','lock')},
+  {short:'電話番号<small>迷惑電話</small>',icon:'receiver',accept:['third'],hint:'勝手に渡すと…',target:'f-tel',scene:info,fix:ok('同意なく他社に渡さない','shield')},
+  {short:'クレジットカード<small>勝手に買い物</small>',icon:'card',accept:['enc'],hint:'盗まれても読めないように',target:'f-card',scene:info,fix:ok('暗号化して保管','key')},
+  {short:'メールアドレス<small>迷惑メール</small>',icon:'mail',accept:['agree'],hint:'集める前に…',target:'f-mail',scene:info,async fix(m){m.ovl.appendChild(h(`<div class="mbadge ok" style="top:330px">${ic('doc',18)}<span>□ 利用目的（ご連絡のため）に同意する</span></div>`));await sleep(900)}},
+  {short:'購入履歴<small>好みを知られる</small>',icon:'list',accept:['del'],hint:'本人に頼まれたら？',target:'hist',async scene(m){await m.go('custom',{html:HIST},{label:'注文履歴'})},fix:ok('本人の求めで削除','trash')}]});
+Page.init({id:'09',title:'個人情報保護対応',done:'個人情報を守れた！',onCheck:()=>SC.check()});SC.start();
+</script>

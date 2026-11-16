@@ -1,0 +1,68 @@
+<!-- title: バックエンド -->
+<!-- use: mock -->
+<style>
+.bd{position:absolute;left:28px;right:28px;top:10px;bottom:10px;display:grid;grid-template-columns:270px 1fr 330px;gap:30px;align-items:center}
+.tabs{display:flex;gap:6px;margin-bottom:14px}.tabs span{font-size:12px;font-weight:700;padding:6px 16px;border-radius:16px;border:1.5px solid var(--l);color:var(--s)}.tabs span.on{border-color:#111;color:#111}.tabs span.done{background:#111;color:#fff;border-color:#111}
+.sim{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.fr{display:flex;gap:6px;margin-left:0;margin-bottom:2px}.fr .ico{width:40px;height:30px;display:flex;justify-content:center}
+.rw{display:flex;gap:6px;align-items:center}
+.c{width:40px;height:40px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;background:#ccc;border:none;font-family:inherit;appearance:none;-webkit-appearance:none;text-align:center;text-align-last:center}
+select.c{background:#ff3b30;cursor:pointer}
+.c.y{background:#ffc107;color:#111}.c.b{background:#8ce3fe}.c.r{background:#ff3b30}.c.g{background:#ccc}
+.go{width:38px;height:38px;border-radius:5px;background:#212121;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.go:disabled{background:#8e8e93;cursor:default}
+.stt{font-weight:700;font-size:13px;width:56px}.stt.ok{color:#2ecc40}.stt.ng{color:#ff3b30}
+.ask{height:40px;border:1.5px solid #111;border-radius:6px;font-size:13px;font-weight:700;padding:0 6px;font-family:inherit}
+.q{font-size:13px;font-weight:700;min-width:70px;text-align:center}
+.ex{display:flex;flex-direction:column;gap:22px}
+.exr{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center}
+.exr>b{font-size:30px;font-weight:700;color:#111}
+.mini{display:flex;gap:3px;align-items:center;position:relative}
+.mini i{width:24px;height:24px;border-radius:4px;font-style:normal;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;background:#ccc}
+.mini i.r{background:#ff3b30}.mini i.b{background:#8ce3fe}.mini i.y{background:#ffc107;color:#111}.mini i.o{outline:2.5px solid #111;outline-offset:1px}
+.mini .ar{font-size:18px;font-weight:700;margin:0 4px}
+.mini .go2{width:22px;height:22px;border-radius:4px;background:#212121;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;margin-left:6px}
+.mini .ok{color:#2ecc40;font-weight:700;font-size:11px;margin-left:4px}
+.gj{font-size:11px;color:var(--s);letter-spacing:.06em;margin-top:6px}
+</style>
+<div class="bd"><div id="mock"></div>
+ <div><div class="tabs"><span id="t1">① 商品の探索</span><span id="t2">② 五十音順に並べ替え</span></div><div class="sim" id="sim"></div><div class="gj" id="gj">五十音順 ▶ アイウエオ カキクケコ サシスセソ タチツテト ナニヌネノ ハヒフヘホ…</div></div>
+ <div class="ex" id="ex"></div></div>
+<script>
+const INIT=['ア','ク','ハ','オ','ス'],ID={'ア':'apple','ク':'grape','ハ':'pine','オ':'orange','ス':'straw'};const GO='アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ';
+const play=ic('play',14,'#fff');
+const M=new Mock($('#mock'),{scale:.95});
+const fr=a=>`<div class="fr">${a.map(k=>`<span class="ico">${ic(PD[ID[k]].ico,26)}</span>`).join('')}</div>`;
+let stage=0,step=0,cur=[...INIT];
+/* ① 探索：先頭から順に「オ（オレンジ）」と比べる */
+function s1(){$('#t1').className='on';$('#t2').className='';
+ $('#ex').innerHTML=`<div class="exr"><b>1</b><div class="mini"><i class="r o">ア</i><i>ク</i><i>ハ</i><span class="ar">＝</span><i class="y">オ</i><span class="ar">?</span></div></div>
+ <div class="exr"><b>2</b><div class="mini"><i class="g">ア</i><span class="ar">→</span><i class="r o">ク</i><i>ハ</i><span class="ar">×</span></div></div>
+ <div class="exr"><b>3</b><div class="mini"><i>ア</i><i>ク</i><i>ハ</i><i class="r o">オ</i><span class="ar">○</span><span class="go2">${play}</span><span class="ok">完了</span></div></div>`;
+ $('#sim').innerHTML=fr(INIT)+`<div class="rw"><span class="q">探す文字</span><span class="c y">オ</span></div>`;row1();M.go('results',{query:'オレンジ',list:INIT.map(k=>ID[k])})}
+function row1(){const r=h(`<div class="rw" data-s="${step}">${INIT.map((k,i)=>`<span class="c ${i<step?'g':i===step?'r':'g'}" style="${i===step?'':'opacity:.5'}">${k}</span>`).join('')}<span class="q">＝ オ ？</span><select class="ask"><option value="">▼</option><option value="o">○ 同じ</option><option value="x">× ちがう</option></select><button class="go">${play}</button><span class="stt"></span></div>`);$('#sim').appendChild(r);
+ M.unhl();M.hl('p-'+ID[INIT[step]]);
+ $('.go',r).onclick=async()=>{const v=$('.ask',r).value,ok=(INIT[step]==='オ')?'o':'x';const st=$('.stt',r);
+  if(v!==ok){st.textContent='エラー';st.className='stt ng';Eng.point($('.ask',r),INIT[step]+' と オ は？');return}
+  st.textContent='OK';st.className='stt ok';$('.go',r).disabled=true;$('.ask',r).disabled=true;Eng.clear();
+  if(v==='o'){M.unhl();await M.go('results',{list:['orange']});M.hl('p-orange');stage=1;$('#t1').className='done';toast('見つかった！');await sleep(900);step=0;s2();return}
+  step++;row1()}}
+/* ② バブルソート：となり同士を比べて入れかえる */
+function s2(){$('#t2').className='on';cur=[...INIT];
+ $('#ex').innerHTML=`<div class="exr"><b>1</b><div class="mini"><i class="r o">ハ</i><i class="r o">オ</i><span class="ar">⇔</span><span style="font-size:11px">比べる</span></div></div>
+ <div class="exr"><b>2</b><div class="mini"><i class="r">オ</i><i class="r">ハ</i><span class="ar">⤨</span><span style="font-size:11px">後ろなら入れかえ</span></div></div>
+ <div class="exr"><b>3</b><div class="mini"><i class="r">ア</i><i class="r">ク</i><i class="r">オ</i><i class="r">ス</i><i class="b">ハ</i><span class="go2">${play}</span><span class="ok">OK</span></div></div>
+ <div class="exr"><b>4</b><div class="mini"><span class="ar">↻</span><i class="y">ア</i><i class="y">オ</i><i class="y">ク</i><i class="y">ス</i><i class="y">ハ</i></div></div>`;
+ $('#sim').innerHTML=fr(INIT)+`<div class="rw">${INIT.map(k=>`<span class="c y">${k}</span>`).join('')}</div>`;M.unhl();M.go('results',{query:'くだもの',list:INIT.map(k=>ID[k]),sortLabel:'五十音順'});row2()}
+const pass=(a,lim)=>{a=[...a];for(let j=0;j<lim-1;j++)if(GO.indexOf(a[j])>GO.indexOf(a[j+1]))[a[j],a[j+1]]=[a[j+1],a[j]];return a};
+function row2(){const n=INIT.length,fix=n-step;const r=h(`<div class="rw">${cur.map((k,i)=>i<fix?`<select class="c">${INIT.map(o=>`<option ${o===k?'selected':''}>${o}</option>`).join('')}</select>`:`<span class="c b">${k}</span>`).join('')}<button class="go">${play}</button><span class="stt"></span></div>`);$('#sim').appendChild(r);
+ $$('select',r).forEach(s=>s.onchange=()=>M.go('results',{list:$$('.c',r).map(e=>ID[e.value||e.textContent])},{push:false,wait:0}));
+ $('.go',r).onclick=async()=>{const u=$$('.c',r).map(e=>e.value||e.textContent),exp=pass(cur,fix),st=$('.stt',r);
+  if(u.join()!==exp.join()){st.textContent='エラー';st.className='stt ng';const k=u.findIndex((v,i)=>v!==exp[i]);Eng.point($$('.c',r)[k],'となりと比べて、後ろなら入れかえ');return}
+  Eng.clear();st.textContent='OK';st.className='stt ok';$('.go',r).disabled=true;cur=exp;$$('.c',r).forEach((e,i)=>{const s=h(`<span class="c ${i>=fix-1?'b':'g'}">${cur[i]}</span>`);e.replaceWith(s)});
+  await M.go('results',{list:cur.map(k=>ID[k])},{push:false,wait:0});step++;
+  if(step<n-1)row2();else{$('#sim').appendChild(h(`<div class="rw">${cur.map(k=>`<span class="c y">${k}</span>`).join('')}<span class="stt ok" style="margin-left:50px">完了</span></div>`));$('#t2').className='done';stage=2;Page.complete()}}}
+s1();
+Page.init({id:'27',title:'バックエンド',done:'探索と並べ替えができた！',guide:()=>[$('.ask'),'○か×を選んで ▶'],
+ async onCheck(){Eng.point($$('.go:not(:disabled)')[0]||$('#sim'),'▶で1つずつ確かめよう',{type:'info'});return false}});
+</script>

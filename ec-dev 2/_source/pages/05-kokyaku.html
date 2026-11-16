@@ -1,0 +1,63 @@
+<!-- title: 顧客の分析 -->
+<!-- use: excel -->
+<style>
+.bd{position:absolute;left:28px;right:28px;top:20px;bottom:86px;display:flex;align-items:center;gap:26px}
+.xl{width:740px;height:100%}
+.big{width:0;height:0;border-top:70px solid transparent;border-bottom:70px solid transparent;border-left:50px solid #d2d2d7;flex:none}
+.res{flex:1;height:100%;display:flex;flex-direction:column;gap:18px}
+.res .ttl{font-size:13px;font-weight:700;color:var(--s)}
+#chart{flex:1;border:1.5px dashed #a1a1a6;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--m);font-size:13px}
+#chart.on{border:1.5px solid var(--t)}
+.chk{border:1.5px solid var(--t);border-radius:12px;padding:16px 18px}
+</style>
+<div class="bd">
+ <div class="xl"><div class="xl-bar"><i class="d"></i><i class="d"></i><i class="d"></i><span style="margin-left:6px">customers.xlsx</span></div>
+  <div class="xl-tabs"><span>ホーム</span><span class="on">挿入</span><span>数式</span></div>
+  <div class="xl-rib" id="rib"><span style="font-size:11px;color:var(--s);margin-right:4px">グラフ</span></div>
+  <div class="xl-fx"><span class="nm" id="fxn">F2</span><i>fx</i><span id="fx"></span></div>
+  <div class="xl-grid" id="grid"></div></div>
+ <div class="big"></div>
+ <div class="res"><div class="ttl">結果</div><div id="chart">グラフ</div>
+  <div class="chk" id="chk"><div data-c="0"><span class="st"></span>年齢層ごとの人数がわかる</div><div data-c="1"><span class="st"></span>人数の多い・少ないが見やすい</div></div></div>
+</div>
+<script>
+/* データ */
+let seed=7;const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+const AG=[[10,6],[20,18],[30,15],[40,10],[50,7],[60,4]];const AREA=['東京','大阪','愛知','福岡','北海道','宮城'];const rows=[];
+AG.forEach(([a,n])=>{for(let i=0;i<n;i++)rows.push({age:a+Math.floor(rnd()*10),area:AREA[Math.floor(rnd()*6)]})});rows.sort(()=>rnd()-.5);
+const N=rows.length;const LBL=['10代','20代','30代','40代','50代','60代'];
+const CH=[['bar','barchart','棒'],['line','linechart','折れ線'],['pie','piechart','円'],['sc','scatter','散布図']];let chartType=null;
+$('#rib').insertAdjacentHTML('beforeend',CH.map(c=>`<div class="rb" data-t="${c[0]}">${ic(c[1],22)}${c[2]}</div>`).join(''));
+$$('.rb').forEach(b=>b.onclick=()=>{chartType=b.dataset.t;$$('.rb').forEach(x=>x.classList.toggle('on',x===b))});
+/* シート */
+const F=LBL.map(()=>({fn:'',a:'',b:''}));
+let html='<table><tr><th></th><th style="width:70px">A</th><th style="width:52px">B</th><th style="width:60px">C</th><th style="width:16px">D</th><th style="width:56px">E</th><th style="width:300px">F</th></tr>';
+for(let r=1;r<=N+1;r++){const d=rows[r-2];html+=`<tr><td class="rn">${r}</td>`;
+  html+=r===1?'<td class="hd">会員ID</td><td class="hd">年齢</td><td class="hd">地域</td>':`<td>C${1000+r-1}</td><td class="num" data-b="${r}">${d.age}</td><td>${d.area}</td>`;
+  html+='<td></td>';
+  if(r===1)html+='<td class="hd">年齢層</td><td class="hd">人数</td>';else if(r<=7)html+=`<td class="hd">${LBL[r-2]}</td><td class="ed" data-f="${r-2}"></td>`;else html+='<td></td><td></td>';html+='</tr>'}
+$('#grid').innerHTML=html+'</table>';
+const OPT=[['','関数を選ぶ ▼'],['count','数える：B列で ◯以上 ◯未満'],['sum','合計：B列をたす'],['avg','平均：B列の平均'],['max','最大：B列で一番大きい']];
+function val(i){const f=F[i];if(f.fn==='count'){if(f.a===''||f.b==='')return null;return rows.filter(r=>r.age>=+f.a&&r.age<+f.b).length}
+  const v=rows.map(r=>r.age);if(f.fn==='sum')return v.reduce((a,b)=>a+b,0);if(f.fn==='avg')return +(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1);if(f.fn==='max')return Math.max(...v);return null}
+function fxText(i){const f=F[i];return f.fn==='count'?`=COUNTIFS(B2:B${N+1},">=${f.a||'◯'}",B2:B${N+1},"<${f.b||'◯'}")`:f.fn==='sum'?`=SUM(B2:B${N+1})`:f.fn==='avg'?`=AVERAGE(B2:B${N+1})`:f.fn==='max'?`=MAX(B2:B${N+1})`:''}
+function cell(i){const td=$(`td[data-f="${i}"]`),f=F[i];
+  td.innerHTML=`<div class="xcell"><select class="xsel">${OPT.map(o=>`<option value="${o[0]}" ${o[0]===f.fn?'selected':''}>${o[0]==='count'?'数える（◯以上◯未満）':o[1]}</option>`).join('')}</select>${f.fn==='count'?`<input class="xin" placeholder="◯" value="${f.a}" data-x="a">以上<input class="xin" placeholder="◯" value="${f.b}" data-x="b">未満`:''}<span class="xval">${val(i)??''}</span></div>`;
+  $('select',td).onchange=e=>{f.fn=e.target.value;cell(i);focus(i)};$$('input',td).forEach(n=>{n.oninput=e=>{f[n.dataset.x]=e.target.value.replace(/\D/g,'');$('.xval',td).textContent=val(i)??'';focus(i)};n.onfocus=()=>focus(i)})}
+function focus(i){$$('td.sel').forEach(t=>t.classList.remove('sel'));$(`td[data-f="${i}"]`).classList.add('sel');$('#fxn').textContent='F'+(i+2);$('#fx').textContent=fxText(i);
+  const f=F[i];$$('td[data-b]').forEach(t=>{const a=+t.textContent;t.classList.toggle('hit',f.fn==='count'&&f.a!==''&&f.b!==''?a>=+f.a&&a<+f.b:!!f.fn)})}
+LBL.forEach((_,i)=>{cell(i);$(`td[data-f="${i}"]`).addEventListener('click',()=>focus(i))});
+const TRUE=LBL.map((_,i)=>rows.filter(r=>r.age>=(i+1)*10&&r.age<(i+2)*10).length);
+function draw(){const v=LBL.map((_,i)=>val(i)??0),W=420,H=250,max=Math.max(1,...v);let s='';const bw=(W-60)/6;
+  if(chartType==='bar')v.forEach((x,i)=>{const hh=(H-60)*x/max;s+=`<rect x="${40+i*bw+8}" y="${H-30-hh}" width="${bw-16}" height="${hh}" fill="#111" rx="3"/><text x="${40+i*bw+bw/2}" y="${H-12}" font-size="11" text-anchor="middle">${LBL[i]}</text><text x="${40+i*bw+bw/2}" y="${H-36-hh}" font-size="11" text-anchor="middle" font-weight="700">${x}</text>`});
+  if(chartType==='line'){const p=v.map((x,i)=>`${40+i*bw+bw/2},${H-30-(H-60)*x/max}`).join(' ');s+=`<polyline points="${p}" fill="none" stroke="#111" stroke-width="2.5"/>`+v.map((x,i)=>`<text x="${40+i*bw+bw/2}" y="${H-12}" font-size="11" text-anchor="middle">${LBL[i]}</text>`).join('')}
+  if(chartType==='pie'){const t=v.reduce((a,b)=>a+b,0)||1;let a0=-Math.PI/2;v.forEach((x,i)=>{const a1=a0+2*Math.PI*x/t;s+=`<path d="M210,125 L${210+95*Math.cos(a0)},${125+95*Math.sin(a0)} A95,95 0 ${a1-a0>Math.PI?1:0} 1 ${210+95*Math.cos(a1)},${125+95*Math.sin(a1)}z" fill="${['#111','#3a3a3c','#6e6e73','#a1a1a6','#c7c7cc','#e5e5ea'][i]}" stroke="#fff"/>`;a0=a1})}
+  if(chartType==='sc')rows.forEach(r=>s+=`<circle cx="${40+(r.age-10)*6}" cy="${H-30-Math.random()*150}" r="3" fill="#111"/>`);
+  $('#chart').className='on';$('#chart').innerHTML=chartType?`<svg width="${W}" height="${H}"><line x1="40" x2="${W-20}" y1="${H-30}" y2="${H-30}" stroke="#d2d2d7"/>${s}</svg>`:'グラフが選ばれていない'}
+function mark(i,ok){$(`#chk [data-c="${i}"] .st`).outerHTML=`<span class="st" style="border:none">${ic(ok?'check':'xcircle',26,ok?'#1a7f37':'#d70015')}</span>`}
+Page.init({id:'05',title:'顧客の分析',checkLabel:'結果を出力する',done:'お客さんの分布がわかった！',
+ guide:()=>[$('td[data-f="0"]'),'ここで関数を選ぼう'],
+ async onCheck(){draw();const ok1=LBL.every((_,i)=>val(i)===TRUE[i]),ok2=chartType==='bar';mark(0,ok1);mark(1,ok2);
+  if(!ok1){const i=LBL.findIndex((_,k)=>val(k)!==TRUE[k]);const f=F[i];Eng.point($(`td[data-f="${i}"]`),f.fn!=='count'?'人数は「数える」':`${LBL[i]}は何歳以上？`);return false}
+  if(!ok2){Eng.point($('.rb[data-t="bar"]').parentElement,chartType?'多い少ないは棒グラフ':'グラフを選ぼう');return false}return true}});
+</script>

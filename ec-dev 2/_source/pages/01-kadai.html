@@ -1,0 +1,66 @@
+<!-- title: 課題の確認 -->
+<!-- use: puzzle -->
+<style>
+/* オープニング */
+#mv{position:absolute;inset:0;z-index:95;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#mv .stage{position:relative;width:1000px;height:420px}
+#mv .it{position:absolute;transform:translate(-50%,-50%);transition:all .6s cubic-bezier(.3,1.3,.5,1);opacity:0}
+#mv .it.on{opacity:1}
+#mv .cap{position:absolute;left:0;right:0;bottom:120px;text-align:center;font-size:30px;font-weight:700;letter-spacing:.06em;transition:opacity .3s}
+#mv .ln{position:absolute;height:0;border-top:2.5px dashed #111;transition:width .7s ease;width:0}
+#mv .ttl{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;opacity:0;transition:opacity .5s}
+#mv .ttl h2{margin:0;font-size:52px;letter-spacing:.06em}
+#mv .chv{display:flex;gap:6px}
+#mv .chv span{padding:12px 28px 12px 34px;font-size:16px;font-weight:700;background:#e8e8ed;color:#a1a1a6;clip-path:polygon(0 0,88% 0,100% 50%,88% 100%,0 100%,12% 50%);transition:all .25s}
+#mv .chv span.on{background:#111;color:#fff}
+#mv .skip{position:absolute;right:28px;bottom:24px;background:#fff;border:1.5px solid #111;border-radius:20px;padding:7px 18px;font-weight:700;cursor:pointer;z-index:3;font-size:12px}
+/* 本編 */
+.wrap{position:absolute;left:28px;right:330px;top:22px;bottom:20px;display:flex;flex-direction:column;gap:22px;justify-content:center}
+.chev{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.cv{position:relative;height:80px;display:flex;align-items:center;justify-content:center}
+.cv::before{content:"";position:absolute;inset:0;background:#f5f5f7;clip-path:polygon(0 0,90% 0,100% 50%,90% 100%,0 100%,10% 50%)}
+.cv .slot{position:relative;width:118px;min-width:0;height:40px}
+.cv .slot .piece{justify-content:center;font-size:14px;font-weight:700}
+.cv.lit::before{background:#111}
+.map{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;min-height:430px}
+.mc{display:flex;flex-direction:column;gap:8px}
+.mt{border:1.5px solid var(--t);border-radius:8px;padding:10px 10px;font-size:12px;font-weight:600;display:flex;gap:8px;align-items:center;background:#fff;transition:background .3s,color .3s}
+.mt .ico{width:18px;height:18px}
+.mc.lit .mt{background:#111;color:#fff}
+</style>
+<div id="mv"><div class="stage" id="st"></div><div class="cap" id="cap"></div>
+  <div class="ttl" id="ttl"><h2>ECサイトをつくろう</h2><div class="chv" id="chv"></div></div><button class="skip" id="skip">スキップ</button></div>
+<div class="wrap"><div class="chev" id="chev"></div><div class="map" id="map"></div></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool" style="flex-direction:column;gap:10px"></div></div>
+<script>
+const ST=[['plan','企画'],['req','要件定義'],['des','設計'],['dev','開発'],['test','テスト'],['ops','管理運用']];
+const MAP={plan:[['flag','課題の確認'],['route','今のECサイトの流れ'],['route','理想の業務の流れ']],
+ req:[['user','関係者への聞き取り'],['barchart','顧客の分析'],['list','必要な機能'],['law','法律'],['badge','個人情報'],['heart','健康への影響'],['shield','セキュリティ'],['thumbs','情報モラル']],
+ des:[['web','画面レイアウト'],['server','システム配置'],['world','ネットワーク'],['db','データベース'],['transfer','処理の流れ']],
+ dev:[['sort','バックエンド'],['tap','フロントエンド']],test:[['tick','結合テスト']],ops:[['money','価格設定']]};
+$('#chev').innerHTML=ST.map(([k])=>`<div class="cv" data-k="${k}"><div class="slot" data-accept="${k}" data-hint="下の作業を見てみよう"></div></div>`).join('');
+$('#map').innerHTML=ST.map(([k])=>`<div class="mc" data-k="${k}">${MAP[k].map(([i,t])=>`<div class="mt">${ic(i,18)}${t}</div>`).join('')}</div>`).join('');
+const pieces={};ST.forEach(([k,n])=>pieces[k]={label:n,cls:'row'});pieces.x1={label:'宣伝',cls:'row'};pieces.x2={label:'仕入れ',cls:'row'};
+const P=new Puzzle({root:$('.wrap'),pool:$('#pool'),pieces});
+Page.init({id:'01',title:'課題の確認',done:'開発の流れがわかった！',
+ async onCheck(){if(!P.judge())return false;P.lock();for(const [k] of ST){$(`.cv[data-k="${k}"]`).classList.add('lit');$(`.mc[data-k="${k}"]`).classList.add('lit');await sleep(260)}return true},
+ guide:()=>[$('#chev .slot'),'下の作業に合う段階を置こう']});
+
+/* ===== オープニング（アイコンが動くだけのシンプルな映像） ===== */
+(async()=>{$('#pg').appendChild($('#mv'));let sk=false;const end=()=>{const m=$('#mv');if(!m)return;m.style.transition='opacity .4s';m.style.opacity=0;setTimeout(()=>m.remove(),400)};
+ $('#skip').onclick=()=>{sk=true;end()};const W=ms=>sk?Promise.reject(0):sleep(ms);const st=$('#st');
+ const put=(k,x,y,s=80,c)=>{const e=h(`<div class="it" style="left:${x}px;top:${y}px">${ic(k,s,c)}</div>`);st.appendChild(e);requestAnimationFrame(()=>e.classList.add('on'));return e};
+ const cap=t=>{$('#cap').textContent=t};
+ try{
+  const ph=put('phone',200,190,120);await W(500);cap('スマホで えらんで');
+  const ct=put('cart',200,190,0);
+  for(const [k,dx] of [['apple',-90],['grape',0],['orange',90]]){const f=put(k,200+dx,40,52);await W(250);f.style.left='200px';f.style.top='190px';f.style.transform='translate(-50%,-50%) scale(.2)';f.style.opacity=0}
+  await W(500);cap('注文が お店に とどく');const store=put('store',800,190,110);
+  const ln=h('<div class="ln" style="left:270px;top:190px"></div>');st.appendChild(ln);await W(50);ln.style.width='460px';
+  const d=put('doc',270,190,40);await W(200);d.style.left='730px';await W(800);d.remove();
+  const ck=put('clipboard',800,320,56);await W(700);cap('家まで とどける');
+  [ph,ln,ck].forEach(e=>{e.style.opacity=0});store.style.left='170px';const hs=put('house',830,200,110);const tr=put('truck',280,215,90);await W(300);tr.style.left='690px';await W(1200);
+  put('bag',830,320,50);await W(700);
+  const T=$('#ttl');T.style.opacity=1;$('#chv').innerHTML=ST.map(s=>`<span>${s[1]}</span>`).join('');for(const s of $$('#chv span')){await W(200);s.classList.add('on')}await W(900);end()
+ }catch(e){end()}})();
+</script>

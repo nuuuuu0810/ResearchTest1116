@@ -1,0 +1,50 @@
+<!-- title: ステークホルダーへの聞き取り -->
+<!-- use: puzzle,mock -->
+<style>
+#chat{position:absolute;left:28px;top:18px;bottom:18px;width:300px;border-right:1.5px solid var(--t);padding-right:20px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.msg{display:flex;gap:8px;align-items:flex-end;animation:pop .25s}
+.msg .av{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--t);display:flex;align-items:center;justify-content:center;flex:none}
+.msg .bb{border:1.5px solid var(--t);border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:13px;font-weight:600;line-height:1.45}
+.msg .who{font-size:10px;color:var(--s);margin-bottom:2px}
+.msg.me{flex-direction:row-reverse}.msg.me .bb{background:#111;color:#fff;border-color:#111;border-radius:14px 14px 4px 14px}
+.dots3{color:var(--m);letter-spacing:3px}
+.mid{position:absolute;left:350px;right:300px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:50px}
+.fl{display:flex;flex-direction:column;align-items:stretch;width:210px}
+.fn{display:flex;align-items:center;gap:10px;border:1.5px solid var(--t);border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:600;height:38px;background:#fff}
+.fn .ico{width:20px;height:20px}
+.fl .tri{border-left-width:9px;border-right-width:9px;border-top-width:9px;margin:4px auto}
+.ins{display:none}.ins.on{display:block}
+.ins .slot{height:44px;width:100%;border-color:#111;border-width:2px}
+.ins .slot .piece{height:40px}
+.ins.wait{display:none}
+.ins.done .slot{border:none}
+</style>
+<div id="chat"></div>
+<div class="mid"><div id="mock"></div><div class="fl" id="fl"></div></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool" style="flex-direction:column;gap:10px"></div></div>
+<script>
+const N=(i,t)=>`<div class="fn">${ic(i,20)}${t}</div>`,T='<i class="tri"></i>';
+const SL=k=>`<div class="ins" data-k="${k}"><div class="slot" data-accept="${k}" data-off="1"><span class="ph">要望に合う機能</span></div></div>`;
+$('#fl').innerHTML=[N('magnify','Webで検索'),N('world','サイトを開く'),N('searchinv','商品を検索'),SL('sort'),N('tap','商品を選ぶ'),SL('stock'),N('cart','カートに入れる'),N('card','支払う'),SL('mail'),N('tick','注文完了'),SL('track')].join(T).replace(/<i class="tri"><\/i>(<div class="ins")/g,'$1').replace(/(<\/div><\/div>)(<div class="fn")/g,'$1<i class="tri"></i>$2');
+const R=[
+ {k:'sort',q:'買い物で、困ったことは？',who:['store','店長'],a:'商品が増えて、探しにくい。安い順に並べたい。',hint:'並べる機能は？',
+  async show(m){await m.go('results',{query:'くだもの',list:['orange','straw','grape','apple','pine'],sortLabel:'おすすめ順'})},
+  async fix(m){await m.tap('sort');await m.go('results',{list:['apple','orange','straw','grape','pine'],sortLabel:'安い順'});m.hl('sort')}},
+ {k:'stock',q:'お店で困っていることは？',who:['boxopen','店員'],a:'売り切れなのに注文が入る。残りの数を見せたい。',hint:'残りの数を見せるには？',
+  async show(m){await m.go('detail',{sel:'pine',qty:1,showStock:false})},async fix(m){await m.go('detail',{showStock:true});m.hl('stock')}},
+ {k:'mail',q:'注文のとき、不安なことは？',who:['user','お客さん'],a:'本当に注文できたか不安…',hint:'注文後にとどくと安心なのは？',
+  async show(m){await m.go('done',{})},async fix(m){m.ovl.appendChild(h(`<div class="mbadge" style="top:40px">${ic('mail',18)}<span>ご注文を受け付けました</span></div>`));await sleep(400)}},
+ {k:'track',q:'ほかには？',who:['user','お客さん'],a:'いつ届くか知りたい！',hint:'荷物の場所がわかるのは？',
+  async show(m){await m.go('done',{})},async fix(m){await m.go('custom',{html:`<div class="shop">${shopTop({cart:[]})}<div class="form"><h3>配送状況</h3>${[['check','注文を受付'],['check','発送しました'],['truck','配達中（明日 11/18）'],['house','お届け']].map((x,i)=>`<div class="card2" style="display:flex;gap:8px;align-items:center;${i>2?'opacity:.4':''}">${ic(x[0],18)}${x[1]}</div>`).join('')}</div></div>`},{label:'配送状況'})}}];
+const pieces={sort:{label:'並べ替え',icon:'sort'},stock:{label:'在庫を表示',icon:'inventory'},mail:{label:'確認メール',icon:'mail'},track:{label:'配送状況',icon:'truck'},x1:{label:'広告を増やす',icon:'megaphone'},x2:{label:'自動で再注文',icon:'refresh'}};
+Object.values(pieces).forEach(p=>p.cls='row');
+const P=new Puzzle({root:$('#fl'),pool:$('#pool'),pieces});
+const M=new Mock($('#mock'),{scale:1.08});let r=0;
+async function say(who,t,me){const m=h(`<div class="msg ${me?'me':''}"><div class="av">${ic(me?'engineer':who[0],22)}</div><div><div class="who">${me?'あなた':who[1]}</div><div class="bb"><span class="dots3">•••</span></div></div></div>`);$('#chat').appendChild(m);await sleep(550);$('.bb',m).textContent=t;await sleep(200)}
+async function round(){const x=R[r];const ins=$(`.ins[data-k="${x.k}"]`);ins.classList.add('on');$('.slot',ins).dataset.hint=x.hint;$('.slot',ins).removeAttribute('data-off');await x.show(M);
+  P.lock(true);Page.busy(true);await say(x.who,x.q,true);await say(x.who,x.a);P.lock(false);Page.busy(false);Eng.guide($('.slot',ins),'ここに追加')}
+Page.init({id:'04',title:'ステークホルダーへの聞き取り',done:'要望をフローに入れられた！',
+ async onCheck(){const x=R[r];if(!P.judge())return false;await x.fix(M);await say(x.who,'それです！');$(`.ins[data-k="${x.k}"] .slot`).setAttribute('data-off','1');$(`.ins[data-k="${x.k}"] .slot`).style.opacity=1;$(`.ins[data-k="${x.k}"]`).classList.add('done');
+  r++;if(r<R.length){await sleep(500);await round();return false}P.lock();return true}});
+round();
+</script>

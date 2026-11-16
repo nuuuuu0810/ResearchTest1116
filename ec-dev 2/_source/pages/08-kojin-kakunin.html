@@ -1,0 +1,16 @@
+<!-- title: 個人情報保護の確認 -->
+<!-- use: puzzle,mock,scenes -->
+<script>
+const MAIL='<div class="fi" data-k="f-mail">hanako@example.jp</div>';
+const HIST=`<div class="shop">${shopTop({cart:[]})}<div class="form"><h3>山田 花子さんの注文履歴</h3><div data-k="hist">${['grape','apple','pine','grape'].map((i,k)=>`<div class="citem"><div class="im">${ic(PD[i].ico,30)}</div><div>${PD[i].name}<br><span style="color:#565959;font-size:10px">10/${3+k*7} に購入</span></div></div>`).join('')}</div></div></div>`;
+const info=async m=>m.go('info',{filled:true,extraFields:MAIL});
+const SC=new Scenes({pieces:{home:{label:'家を知られる',icon:'house'},call:{label:'迷惑電話',icon:'receiver'},buy:{label:'勝手に買い物',icon:'money'},spam:{label:'迷惑メール',icon:'mail'},pref:{label:'好みを知られる',icon:'eye'},x1:{label:'値段が上がる',icon:'tag'}},
+ list:[
+  {short:'住所',icon:'house',accept:['home'],hint:'住所でわかるのは？',target:'f-addr',scene:info,async fix(){}},
+  {short:'電話番号',icon:'receiver',accept:['call'],hint:'電話でくるのは？',target:'f-tel',scene:info,async fix(){}},
+  {short:'クレジットカード',icon:'card',accept:['buy'],hint:'カードを使われると？',target:'f-card',scene:info,async fix(){}},
+  {short:'メールアドレス',icon:'mail',accept:['spam'],hint:'メールでくるのは？',target:'f-mail',scene:info,async fix(){}},
+  {short:'購入履歴',icon:'list',accept:['pref'],hint:'何を買ったかで…',target:'hist',async scene(m){await m.go('custom',{html:HIST},{label:'注文履歴'})},async fix(){}}]});
+SC.list.forEach(s=>s.ask='流出したら？');
+Page.init({id:'08',title:'個人情報保護の確認',done:'リスクを洗い出せた！',onCheck:()=>SC.check()});SC.start();
+</script>

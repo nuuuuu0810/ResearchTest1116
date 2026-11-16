@@ -1,0 +1,13 @@
+<!-- title: 健康への影響調査 -->
+<!-- use: puzzle,mock,scenes -->
+<style>.dark .screen{filter:invert(.9) hue-rotate(180deg)}.tiny .pitem .nm,.tiny .pitem .dlv,.tiny .stars{font-size:6px!important}.tiny .pr{font-size:8px!important}.big .pitem .nm{font-size:15px!important}</style>
+<script>
+const NT=(t,top=40)=>`<div class="mbadge" style="top:${top}px">${t}</div>`;
+const SC=new Scenes({pieces:{night:{label:'夜間モード',icon:'moon'},font:{label:'文字サイズ変更',icon:'textsize'},limit:{label:'使った金額を通知',icon:'barchart'},rest:{label:'休憩のお知らせ',icon:'coffee'},x1:{label:'画面を明るく',icon:'sun'},x2:{label:'通知を増やす',icon:'megaphone'}},
+ list:[
+  {short:'夜中にまぶしい画面',icon:'moon',accept:['night'],hint:'夜は画面を…',target:'banner',async scene(m){m.scr.classList.remove('dark');await m.go('top');m.badge('午前 2:00',{icon:'clock',top:40})},async fix(m){m.scr.classList.add('dark');await sleep(1200);m.scr.classList.remove('dark')}},
+  {short:'小さい文字で目が疲れる',icon:'eye',accept:['font'],hint:'読みやすい大きさに',target:'p-apple',async scene(m){await m.go('results',{query:'くだもの'});m.view.firstElementChild.classList.add('tiny')},async fix(m){await m.go('results',{query:'くだもの'});m.view.firstElementChild.classList.add('big');await sleep(1000)}},
+  {short:'買い物がやめられない',icon:'cart',accept:['limit'],hint:'使いすぎに気づくには？',target:'total',async scene(m){await m.go('cart',{cart:[{id:'pine',qty:6},{id:'grape',qty:8}]});m.badge('今月30回目の注文',{icon:'alert',cls:'ng',top:330})},async fix(m){m.badge('今月 ￥42,000 使っています',{icon:'barchart',cls:'ok',top:330});await sleep(1000)}},
+  {short:'長い時間、同じ姿勢',icon:'clock',accept:['rest'],hint:'ひと休みのきっかけ',target:'banner',async scene(m){await m.go('top');m.badge('連続 2時間',{icon:'clock',top:40})},async fix(m){m.badge('少し休憩しませんか？',{icon:'coffee',cls:'ok',top:330});await sleep(1000)}}]});
+Page.init({id:'10',title:'健康への影響調査',done:'健康に配慮できた！',onCheck:()=>SC.check()});SC.start();
+</script>

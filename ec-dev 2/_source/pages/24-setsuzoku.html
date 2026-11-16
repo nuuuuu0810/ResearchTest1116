@@ -1,0 +1,38 @@
+<!-- title: 接続の流れ -->
+<!-- use: puzzle -->
+<style>
+#seq{position:absolute;left:28px;right:330px;top:0;bottom:0}
+.ab{position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700}
+.pcol{position:absolute;left:250px;top:70px;width:80px;height:600px;border:1.5px solid var(--t);border-radius:14px}
+.svb{position:absolute;left:820px;width:110px;border:1.5px solid var(--t);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;font-weight:700}
+.msg{position:absolute;left:330px;width:490px;height:0;border-top:1.5px solid #111}
+.msg::after{content:"";position:absolute;top:-6px;border:6px solid transparent}
+.msg.r::after{right:-1px;border-left:9px solid #111}.msg.l::after{left:-1px;border-right:9px solid #111}
+.msg .slot{position:absolute;left:105px;top:-22px;width:280px;height:44px}
+.role{position:absolute;left:770px;width:210px}.role .slot{height:44px;width:100%}
+.hz{position:absolute;height:0;border-top:1.5px solid #8e8e93}
+.hz::after{content:"";position:absolute;right:-1px;top:-5px;border:5px solid transparent;border-left:8px solid #8e8e93}
+.hz.l::after{right:auto;left:-1px;border-left:5px solid transparent;border-right:8px solid #8e8e93}
+.dn{position:absolute;left:278px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:12px solid #c7c7cc}
+.env{position:absolute;z-index:5;transform:translate(-50%,-50%);transition:left .9s ease-in-out;line-height:0}
+</style>
+<div id="seq"></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool" style="flex-direction:column;gap:10px"></div></div>
+<script>
+const Y=[130,250,440,560];
+let s=`<div class="ab" style="left:40px;top:${Y[0]-30}px">${ic('user',38)}URLをクリック</div><div class="hz" style="left:110px;top:${Y[0]}px;width:130px"></div>
+<div class="ab" style="left:40px;top:${Y[3]-30}px">${ic('user',38)}Webサイトを閲覧</div><div class="hz l" style="left:110px;top:${Y[3]}px;width:130px"></div><div class="pcol"></div>`;
+Y.forEach(y=>s+=`<div class="ab" style="left:270px;top:${y-24}px">${ic('phone',34)}スマホ</div>`);s+=`<i class="dn" style="top:${(Y[1]+Y[2])/2}px"></i>`;
+s+=`<div class="svb" id="dns" style="top:${Y[0]-50}px;height:${Y[1]-Y[0]+100}px">${ic('db',44)}DNSサーバー</div><div class="svb" id="web" style="top:${Y[2]-50}px;height:${Y[3]-Y[2]+100}px">${ic('db',44)}Webサーバー</div>`;
+const MS=[['q','r','まず聞くのは「場所」'],['a','l','DNSが教えてくれるのは？'],['req','r','場所がわかったら…'],['res','l','最後に届くのは？']];
+MS.forEach(([k,d,h],i)=>s+=`<div class="msg ${d}" style="top:${Y[i]}px"><div class="slot" data-accept="${k}" data-hint="${h}"></div></div>`);
+s+=`<div class="role" style="top:${Y[0]-110}px"><div class="slot" data-accept="rd" data-hint="DNSの役割は？"></div></div><div class="role" style="top:${Y[3]+60}px"><div class="slot" data-accept="rw" data-hint="Webサーバーの役割は？"></div></div>`;
+$('#seq').innerHTML=s;
+const P=new Puzzle({root:$('#seq'),pool:$('#pool'),pieces:{q:{label:'データのある場所を教えて',icon:'question'},a:{label:'データの場所は ◯◯◯◯ です',icon:'addr'},req:{label:'◯◯◯◯ のデータをください',icon:'send'},res:{label:'◯◯◯◯ のデータです',icon:'box'},rd:{label:'データのある場所を教えてくれる',icon:'db'},rw:{label:'Webサイトのデータをくれる',icon:'db'},x1:{label:'Webサーバーの場所を作る',icon:'tools'},x2:{label:'データを暗号にする',icon:'key'}}});
+Object.values(P.defs).forEach(d=>d.cls='row');P.renderPool();
+async function fly(i){const m=$$('.msg')[i];const r=relRect(m),x0=MS[i][1]==='r'?r.x:r.r,x1=MS[i][1]==='r'?r.r:r.x;const e=h(`<div class="env" style="left:${x0}px;top:${r.y}px">${ic('mail',26)}</div>`);$('#pg').appendChild(e);await sleep(30);e.style.left=x1+'px';await sleep(950);e.remove()}
+Page.init({id:'24',title:'接続の流れ',nextLabel:'ネットワーク構成図へ戻る',done:'つながった！',guide:()=>[$('.msg .slot'),'最初のやり取りは？'],
+ async onCheck(){const r=P.check(),bad=new Set([...r.wrong,...r.empty]);const ms=$$('.msg .slot');
+  for(let i=0;i<4;i++){if(bad.has(ms[i])){Eng.point(ms[i],ms[i].dataset.hint);return false}await fly(i)}
+  if(!P.judge())return false;P.lock();return true}});
+</script>

@@ -1,0 +1,15 @@
+/* ===== 配置図（ハブ） ===== */
+.dg{position:absolute;left:60px;right:60px;top:40px;height:360px;display:flex;align-items:center;justify-content:space-between}
+.node{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;font-weight:700;z-index:2}
+.node .bx{width:96px;height:96px;border:1.5px solid var(--t);border-radius:18px;background:#fff;display:flex;align-items:center;justify-content:center}
+.node .bx .ico{width:52px;height:52px}
+.link{flex:1;height:0;border-top:2px solid var(--t);margin:0 10px;margin-bottom:28px}
+.tasks{position:absolute;left:40px;right:40px;top:470px;height:110px}
+.task{width:230px;border:1.5px solid var(--t);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;background:#fff;transition:transform .15s}
+.task:hover{transform:translateY(-2px)}
+.task .tt{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700}
+.task .n{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--t);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+.task .go{align-self:flex-end;font-size:11px;font-weight:700;color:var(--s)}
+.task.done{border-color:var(--l)}.task.done .n{border:none}
+.task.lock{opacity:.3;cursor:not-allowed}
+.task.cur{box-shadow:0 0 0 3px rgba(0,0,0,.1)}

@@ -1,0 +1,14 @@
+<!-- title: 情報モラルの動向調査 -->
+<!-- use: puzzle,mock,scenes -->
+<script>
+const REV=(l)=>`<div class="shop">${shopTop({cart:[]})}<div class="form"><h3>カスタマーレビュー</h3><div data-k="rev">${l.map(r=>`<div class="card2"><div class="lb">${r[0]}${r[2]?'<span style="font-size:9px;border:1px solid #111;border-radius:4px;padding:0 4px">PR</span>':''}</div>${stars(r[3]||5,'')} ${r[1]}</div>`).join('')}</div></div></div>`;
+const ok=(t,i)=>async m=>{m.clearBadges();m.badge(t,{cls:'ok',icon:i,top:330});await sleep(1000)};
+const SC=new Scenes({pieces:{lim:{label:'買える数を制限',icon:'inventory'},pr:{label:'PRと表示',icon:'tag'},rule:{label:'通報・削除',icon:'flag'},ck:{label:'履歴の使い方を説明',icon:'cookie'},age:{label:'年齢を確認',icon:'child'},x1:{label:'悪い評価を消す',icon:'trash'},x2:{label:'店員が高評価',icon:'star'}},
+ list:[
+  {short:'転売のための買い占め',icon:'refresh',accept:['lim'],hint:'1人がたくさん買える',target:'qty',async scene(m){await m.go('detail',{sel:'grape',qty:100})},async fix(m){await m.go('detail',{qty:2});m.badge('おひとり様2点まで',{cls:'ok',icon:'inventory',top:330});await sleep(900)}},
+  {short:'お店が書いた「やらせ」レビュー',icon:'star',accept:['pr'],hint:'宣伝なら…',target:'rev',async scene(m){await m.go('custom',{html:REV([['ゆう','人生でいちばん！'],['あき','毎日これだけ！']])},{label:'レビュー'})},async fix(m){await m.go('custom',{html:REV([['ゆう','人生でいちばん！',1],['あき','毎日これだけ！',1]])},{label:'レビュー'});await sleep(900)}},
+  {short:'人を傷つける書き込み',icon:'alert',accept:['rule'],hint:'ルール違反だけ対応',target:'rev',async scene(m){await m.go('custom',{html:REV([['匿名','配達員がひどい…（悪口）',0,1],['匿名','買う人はセンスない',0,1]])},{label:'レビュー'})},ok:0,fix:ok('通報により削除しました','flag')},
+  {short:'見た物の広告が追いかけてくる',icon:'eye',accept:['ck'],hint:'何に使うか説明',target:'banner',async scene(m){await m.go('top');m.badge('さっき見たパイナップル、まだ？',{icon:'megaphone',top:60})},fix:ok('閲覧履歴の使い方を表示','cookie')},
+  {short:'子どもの高額な買い物',icon:'child',accept:['age'],hint:'大人の同意を',target:'total',async scene(m){await m.go('info',{filled:true,cart:[{id:'pine',qty:20}]})},fix:ok('保護者の同意が必要です','child')}]});
+Page.init({id:'13',title:'情報モラルの動向調査',done:'モラルを守るサイトに！',onCheck:()=>SC.check()});SC.start();
+</script>

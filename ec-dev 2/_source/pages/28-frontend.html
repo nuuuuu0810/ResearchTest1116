@@ -1,0 +1,49 @@
+<!-- title: フロントエンド -->
+<!-- use: puzzle,mock -->
+<style>
+.bd{position:absolute;left:28px;right:330px;top:10px;bottom:10px;display:flex;align-items:center;justify-content:center;gap:70px}
+.ws{width:380px;display:flex;flex-direction:column;gap:14px}
+.dots{display:flex;gap:6px}.dots i{width:28px;height:4px;border-radius:2px;background:var(--l2)}.dots i.on{background:#111}.dots i.done{background:#8e8e93}
+.goal{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700}
+.goal .tg{border:1.5px solid var(--t);border-radius:10px;width:110px;height:84px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;font-size:11px}
+.stack{display:flex;flex-direction:column}
+.hat{background:#111;color:#fff;border-radius:14px 14px 6px 6px;padding:12px 16px;font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center;position:relative}
+.stack .slot{height:48px;border-radius:6px;margin-top:-1px;position:relative}
+.stack .slot::before,.piece.blk::before{content:"";position:absolute;left:22px;top:-1px;width:22px;height:7px;border-radius:0 0 6px 6px;border:1.5px solid currentColor;border-top:none;background:#fff}
+.stack .slot::before{color:#8e8e93;border-style:dashed}
+.stack .slot.filled::before{display:none}
+.piece.blk{height:46px;border-radius:6px;padding:0 14px;font-size:12.5px}
+.piece.blk::before{color:#111}
+.stack .slot .piece{height:46px}
+.sel{outline:2.5px dashed #111;outline-offset:3px;border-radius:6px}
+</style>
+<div class="bd"><div id="mock"></div>
+ <div class="ws"><div class="dots" id="dots"></div><div class="goal" id="goal"></div><div class="stack" id="stack"></div></div></div>
+<div class="choices r"><span class="ctag">ブロック</span><div class="pool" id="pool" style="flex-direction:column;gap:10px"></div></div>
+<script>
+const B=(t,i)=>({label:t,icon:i,cls:'blk row'});
+const ST=[
+ {k:'img',name:'商品の画像',ic:'images',goal:ic('grape',46),acc:['show','big'],pieces:{show:B('画像を表示：ぶどう','images'),big:B('大きさ：横いっぱい','sort'),x1:B('画像を表示：りんご','images'),x2:B('大きさ：小さく','sort')},hint:['どの画像？','デザインは大きい']},
+ {k:'name',name:'商品名',ic:'textsize',goal:'<b style="font-size:16px">グレープ</b>',acc:['txt','bold','size'],pieces:{txt:B('文字を表示：グレープ','textsize'),bold:B('太さ：太字','textsize'),size:B('大きさ：大きく','sort'),x1:B('文字を表示：オレンジ','textsize'),x2:B('大きさ：とても小さく','sort')},hint:['どの文字？','太さは？','大きさは？']},
+ {k:'price',name:'値段',ic:'money',goal:'<b style="font-size:18px">￥500</b>',acc:['txt','col'],pieces:{txt:B('文字を表示：￥500','money'),col:B('色：黒','sun'),x1:B('文字を表示：￥5','money'),x2:B('色：うすい黄色','sun')},hint:['値段は？','読みやすい色']},
+ {k:'btn',name:'カートボタン',ic:'cart',goal:'<span class="ybtn" style="width:96px;height:28px;font-size:10px">カートに入れる</span>',acc:['btn','col','tap'],pieces:{btn:B('ボタンを表示：カートに入れる','tap'),col:B('色：黄色','sun'),tap:B('押したら：カートに追加','cart'),x1:B('押したら：何もしない','close'),x2:B('色：白','sun')},hint:['どのボタン？','目立つ色','押したらどうなる？']}];
+let st=0,P;const done={};const M=new Mock($('#mock'),{scale:1.02});
+const v=i=>P&&P.get($$('#stack .slot')[i]);
+function render(){const S={sel:'grape',qty:1};M.go('detail',S,{push:false,wait:0}).then(()=>{
+  const im=M.el('img'),nm=M.el('name'),pr=M.el('price'),ad=M.el('add');const cur=(ST[st]||{}).k;
+  const val=(k,i)=>k===cur?v(i):done[k]?ST.find(s=>s.k===k).acc[i]:null;
+  const a=val('img',0),b=val('img',1);im.innerHTML=a?ic(a==='show'?'grape':'apple',b==='big'?120:b?40:70):'';
+  const t=val('name',0),bo=val('name',1),sz=val('name',2);nm.textContent=t?(t==='txt'?'グレープ':'オレンジ'):'';nm.style.fontWeight=bo==='bold'?'700':'400';nm.style.fontSize=sz==='size'?'18px':sz==='x2'?'7px':'12px';
+  const p=val('price',0),c=val('price',1);pr.innerHTML=p?`<span class="pr"><sup>￥</sup>${p==='txt'?'500':'5'}</span>`:'';pr.style.color=c==='col'?'#111':c==='x2'?'#fff7b0':'#999';
+  const bt=val('btn',0),bc=val('btn',1);ad.style.visibility=bt?'visible':'hidden';ad.style.background=bc==='col'?'#ffd814':'#fff';ad.style.borderColor=bc==='col'?'#fcd200':'#ddd';
+  M.unhl();const tg={img:im,name:nm,price:pr,btn:ad}[cur];if(tg)tg.classList.add('sel')})}
+function stage(){const s=ST[st];$('#dots').innerHTML=ST.map((_,i)=>`<i class="${i<st?'done':i===st?'on':''}"></i>`).join('');
+ $('#goal').innerHTML=`<div class="tg">${s.goal}</div><span>この部分を<br>ブロックでつくろう</span>`;
+ $('#stack').innerHTML=`<div class="hat">${ic(s.ic,18,'#fff')}${s.name}をつくる</div>`+s.acc.map((a,i)=>`<div class="slot" data-accept="${a}" data-hint="${s.hint[i]}"></div>`).join('');
+ if(P)P.lock(true);P=new Puzzle({root:$('#stack'),pool:$('#pool'),pieces:s.pieces,onChange:render});render()}
+stage();
+Page.init({id:'28',title:'フロントエンド',done:'画面ができた！',guide:()=>[$('#stack .slot'),'ブロックを組み合わせよう'],
+ async onCheck(){if(!P.judge())return false;P.lock();done[ST[st].k]=1;st++;
+  if(st<ST.length){toast('デザインどおり！');stage();return false}
+  $('#dots').innerHTML=ST.map(()=>'<i class="done"></i>').join('');M.unhl();await M.tap('add');M.S.cart=[{id:'grape',qty:1}];await M.go('detail',{},{push:false});render();toast('カートに追加しました');return true}});
+</script>

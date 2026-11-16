@@ -1,0 +1,53 @@
+<!-- title: 暗号化 -->
+<!-- use: puzzle,mock -->
+<style>
+.bd{position:absolute;left:28px;right:330px;top:10px;bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.proc{width:560px;display:flex;flex-direction:column;gap:22px}
+.mt{align-self:flex-start;background:#7f7f7f;color:#fff;border-radius:16px;padding:6px 16px;font-size:12px;font-weight:700}
+.sec{display:flex;flex-direction:column;gap:12px;border-bottom:1.5px solid var(--t);padding-bottom:20px}
+.sec:last-child{border:none}
+.it{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700}
+.it .ico{width:34px;height:34px}
+.cm{display:flex;align-items:center;justify-content:center;gap:16px}
+.ar2{display:flex;flex-direction:column;gap:6px;align-items:center;font-size:10px;font-weight:700}
+.ar2 i{width:60px;height:2px;background:#111;position:relative;display:block}
+.ar2 i::after{content:"";position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left:7px solid #111}
+.ar2 i.l::after{right:auto;left:-1px;border-left:5px solid transparent;border-right:7px solid #111}
+.slot.sq{width:76px;height:76px}.slot.sq.filled>.piece{width:76px;height:76px}
+.pk2{display:flex;gap:16px;align-items:stretch}
+.bx2{flex:1;border:1.5px solid var(--t);border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.bx2 .hd{font-size:11px;font-weight:700;display:flex;gap:4px;align-items:center}
+.vt{width:2px;height:14px;background:#111}
+.pair{display:flex;gap:6px;align-items:center;font-size:10px;font-weight:700}
+.spy{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700}
+.spy .see{border:1.5px solid #111;border-radius:6px;padding:3px 8px;font-family:ui-monospace,Menlo,monospace;min-width:110px;text-align:center;min-height:22px}
+.spy .see.leak{border-color:var(--ng);color:var(--ng)}
+.sv{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.sv .rcv{border:1.5px dashed #8e8e93;border-radius:8px;padding:6px 10px;font-family:ui-monospace,Menlo,monospace;font-size:11px;min-width:150px;text-align:center}
+</style>
+<div class="bd"><div id="mock"></div>
+ <div class="proc" id="proc">
+  <div class="sec"><span class="mt">共通鍵暗号方式</span><div class="cm"><div class="it" id="d1">${''}</div><div class="ar2">暗号化<i></i><i class="l"></i>復号化</div><div class="slot sq" id="s1" data-accept="com" data-hint="同じ鍵で閉めて開ける"></div><div class="ar2">暗号化<i></i><i class="l"></i>復号化</div><div class="it" id="d2"></div></div></div>
+  <div class="sec"><span class="mt">公開鍵暗号方式</span><div class="pk2">
+   <div class="bx2"><div class="hd" id="hS"></div><div class="it" id="d3"></div><div class="vt"></div><div class="slot sq" id="s2" data-accept="pub" data-hint="だれでも使える鍵で閉める"></div><div class="vt"></div><div class="it" id="d4"></div></div>
+   <div class="spy" id="spy"></div>
+   <div class="bx2"><div class="hd" id="hR"></div><div class="pair" id="pair"></div><div class="it" id="d5"></div><div class="vt"></div><div class="slot sq" id="s3" data-accept="sec" data-hint="受け取る人だけの鍵で開ける"></div><div class="vt"></div><div class="it" id="d6"></div></div></div></div>
+ </div>
+ <div class="sv"><span id="svi"></span>サーバー<div class="rcv" id="rcv">受信待ち</div></div></div>
+<div class="choices r"><span class="ctag">選択肢</span><div class="pool" id="pool"></div></div>
+<script>
+const doc=t=>ic('doc',34)+t,enc=t=>ic('morse',34)+t;
+$('#d1').innerHTML=doc('文書');$('#d2').innerHTML=enc('暗号化文書');$('#d3').innerHTML=doc('文書');$('#d4').innerHTML=enc('暗号化文書');$('#d5').innerHTML=enc('暗号化文書');$('#d6').innerHTML=doc('文書');
+$('#hS').innerHTML=ic('user',14)+'送信（スマホ）';$('#hR').innerHTML=ic('user',14)+'受信（サーバー）';$('#svi').innerHTML=ic('server',52);
+$('#pair').innerHTML=ic('key',20,'#0a84ff')+'秘密鍵 ＋'+ic('key',20,'#d70015')+'公開鍵';
+$('#spy').innerHTML=ic('eye',30)+'のぞく人<div class="see" id="see"></div>';
+const P=new Puzzle({root:$('#proc'),pool:$('#pool'),tile:true,pieces:{com:{label:'共通鍵',icon:ic('key',34)},pub:{label:'公開鍵',icon:ic('key',34,'#d70015')},sec:{label:'秘密鍵',icon:ic('key',34,'#0a84ff')},none:{label:'鍵なし',icon:'close',inf:true}}});
+const M=new Mock($('#mock'),{scale:.92});M.go('info',{filled:true});
+Page.init({id:'23',title:'暗号化',nextLabel:'ネットワーク構成図へ戻る',done:'安全に届いた！',guide:()=>[$('#s1'),'どの鍵を使う？'],
+ async onCheck(){const g=id=>P.get($('#'+id));const plain='4980 1234…',cipher='x9#Qa7!pL2…';
+  await Wire.send($('#mock .scr'),$('#d3'),'カード番号',{dur:600});const e=g('s2'),d=g('s3');const sent=e&&e!=='none'?cipher:plain;
+  $('#see').textContent=sent;$('#see').classList.toggle('leak',sent===plain);await Wire.send($('#d4'),$('#d5'),sent,{dur:700});
+  const ok=P.check().ok;const read=sent===plain||(e==='pub'&&d==='sec');$('#rcv').textContent=read?plain:'読めない';
+  if(sent===plain)M.badge('カード番号がのぞかれた！',{cls:'ng',icon:'eye',top:60});else if(!read)M.badge('サーバーが読めない',{cls:'ng',icon:'alert',top:60});
+  if(!ok){P.judge();return false}M.clearBadges();P.lock();await M.tap('confirm');await M.go('done');M.hideFinger();return true}});
+</script>
